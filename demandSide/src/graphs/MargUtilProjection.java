@@ -1,12 +1,13 @@
 package graphs;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
+
+import org.apache.commons.math3.util.FastMath;
+
 import consumers.Consumer;
 import consumers.Consumers;
 import consumers.Pareto;
 import firms.Firm;
-import firms.SegmentLimitOLD;
-import firms.Utils;
 import repast.simphony.context.Context;
 import repast.simphony.context.space.grid.ContextGrid;
 import repast.simphony.space.grid.SimpleGridAdder;
@@ -42,7 +43,7 @@ public class MargUtilProjection {
 
 	}
 
-	public void update(Firm f) {
+/*	public void update(Firm f) {
 
 		int x = margUtilToCoord(Utils.getPoorestConsumerMargUtil(
 				f.getQuality(), f.getPrice()));
@@ -59,11 +60,11 @@ public class MargUtilProjection {
 		space.moveTo(sL, x, getFreeY(x, FIRMS_HEIGHT, 2));
 
 	}
-
+*/
 	private int margUtilToCoord(double margUtilOfQuality) {
 
-		return (int) Math.min(
-				Math.round(margUtilOfQuality / getMaxUtilToDraw()
+		return (int) FastMath.min(
+				FastMath.round(margUtilOfQuality / getMaxUtilToDraw()
 						* (MAX_X - MIN_X))
 						+ MIN_X, MAX_X);
 	}

@@ -10,6 +10,4 @@
 		<projection type="continuous space" id="ConsumersProjection"></projection>
 		<projection type="continuous space" id="ConsumptionProjection"></projection>
 	</context>
-		<context id="Segments_Context">
-	</context>
 </context>

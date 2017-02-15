@@ -3,7 +3,7 @@ package graphs;
 import consumers.Consumers;
 import firms.Firm;
 import firms.Firms;
-import firms.Offer;
+import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -37,18 +37,18 @@ public class FirmsDemandProjection {
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getMinPrice())
-				/ (Offer.getMaxPrice() - Offer.getMinPrice()) * (MAX_X - MIN_X)
+		return (price - Offer.getAbsoluteMinPrice())
+				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
 	private double demandToCoord(int demand) {
-		return (double)demand / Consumers.getNumberOfConsumers() * (MAX_Y - MIN_Y) + MIN_Y;
+		return (double)demand / Consumers.getMarketSize() * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
 	private double qualityToCoord(double quality) {
-		return MAX_Z - ((quality - Offer.getMinQuality())
-				/ (Offer.getMaxQuality() - Offer.getMinQuality())
+		return MAX_Z - ((quality - Offer.getAbsoluteMinQuality())
+				/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
 				* (MAX_Z - MIN_Z) + MIN_Z);
 	}
 

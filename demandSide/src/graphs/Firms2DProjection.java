@@ -2,7 +2,7 @@ package graphs;
 
 import firms.Firm;
 import firms.Firms;
-import firms.Offer;
+import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -34,14 +34,14 @@ public class Firms2DProjection {
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getMinPrice())
-				/ (Offer.getMaxPrice() - Offer.getMinPrice()) * (MAX_X - MIN_X)
+		return (price - Offer.getAbsoluteMinPrice())
+				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
 	private double qualityToCoord(double quality) {
-		return (quality - Offer.getMinQuality())
-				/ (Offer.getMaxQuality() - Offer.getMinQuality())
+		return (quality - Offer.getAbsoluteMinQuality())
+				/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
 				* (MAX_Y - MIN_Y) + MIN_Y;
 	}
 

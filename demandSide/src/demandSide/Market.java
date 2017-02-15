@@ -3,14 +3,13 @@ package demandSide;
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 import firms.Firm;
 import firms.Firms;
-import firms.Offer;
-import firms.SegmentLimitOLD;
 import graphs.ConsumersProjection;
 import graphs.ConsumptionProjection;
 import graphs.Firms2DProjection;
 import graphs.FirmsDemandProjection;
 import graphs.FirmsProfitProjection;
 import graphs.MargUtilProjection;
+import offer.Offer;
 
 import java.util.ArrayList;
 
@@ -38,7 +37,6 @@ public class Market extends DefaultContext<Object> implements
 	public static ConsumptionProjection consumptionProjection;
 	public static MargUtilProjection margUtilProjection;
 
-	public static DefaultContext<SegmentLimitOLD> segments;
 	public static ArrayList<Firm> toBeKilled;
 
 	@Override
@@ -86,17 +84,13 @@ public class Market extends DefaultContext<Object> implements
 		// Create firms
 		firms = new Firms();
 		context.addSubContext(firms);
-
+/*
 		// Firms Projections
 		// Dimensions are price, quality and consumers
 		firms2DProjection = new Firms2DProjection(firms);
 		firmsDemandProjection = new FirmsDemandProjection(firms);
 		firmsProfitProjection = new FirmsProfitProjection(firms);
-
-		// Create Market Segments defined by firms prices and qualities offered
-		segments = new DefaultContext<SegmentLimitOLD>("Segments_Context");
-		context.addSubContext(segments);
-
+*/
 		return context;
 
 	}

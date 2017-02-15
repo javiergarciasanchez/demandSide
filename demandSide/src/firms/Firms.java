@@ -1,11 +1,15 @@
 package firms;
 
+import java.util.Collection;
 import java.util.TreeSet;
+
+import org.apache.commons.math3.util.FastMath;
 
 import demandSide.Market;
 import demandSide.RunPriority;
 import cern.jet.random.Gamma;
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
+
 import repast.simphony.context.DefaultContext;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.random.RandomHelper;
@@ -20,7 +24,7 @@ public class Firms extends DefaultContext<Firm> {
 	double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
 
 	// Theoretical market based on perceived quality and price
-	private TreeSet<Firm> firmsByQ;
+	public TreeSet<Firm> firmsByQ;
 	FirmsSegments realQSegments, perceivedQSegments;
 
 	public Firms() {
@@ -33,6 +37,8 @@ public class Firms extends DefaultContext<Firm> {
 
 		createProbabilityDistrib();
 
+		createFirmLists();
+
 	}
 
 	private void createProbabilityDistrib() {
@@ -42,16 +48,15 @@ public class Firms extends DefaultContext<Firm> {
 		// We use Gamma distribution because the domain is > 0
 		mean = (Double) GetParameter("fixedCostMean");
 		stdDevPercent = (Double) GetParameter("fixedCostStdDevPerc");
-		alfa = (1 / Math.pow(stdDevPercent, 2));
+		alfa = (1 / FastMath.pow(stdDevPercent, 2));
 		lamda = alfa / mean;
 		fixedCostDistrib = RandomHelper.createGamma(alfa, lamda);
 
 	}
 
-	@ScheduledMethod(start = 1, priority = RunPriority.CREATE_FIRM_LISTS_PRIORITY, interval = 1)
 	public void createFirmLists() {
 
-		firmsByQ = new TreeSet<Firm>();
+		firmsByQ = new TreeSet<Firm>(new CompareByQ());
 		realQSegments = new FirmsRealQSegments();
 		perceivedQSegments = new FirmsPerceivedQSegments();
 
@@ -80,8 +85,7 @@ public class Firms extends DefaultContext<Firm> {
 	@ScheduledMethod(start = 1, priority = RunPriority.ADD_FIRMS_PRIORITY, interval = 1)
 	public void addFirms() {
 
-		if ((boolean) GetParameter("firmsEntryOnlyAtStart")
-				&& (RepastEssentials.GetTickCount() != 1))
+		if ((boolean) GetParameter("firmsEntryOnlyAtStart") && (RepastEssentials.GetTickCount() != 1))
 			return;
 
 		for (int i = 1; i <= (Integer) GetParameter("potencialFirmsPerPeriod"); i++) {
@@ -98,6 +102,20 @@ public class Firms extends DefaultContext<Firm> {
 
 		Market.toBeKilled.clear();
 
+	}
+
+	@SuppressWarnings("unchecked")
+	public static void get() {
+		
+		get((Collection<Firm>)RepastEssentials.FindContext("Firms_Context"));
+
+	}
+
+	public static void get(Collection<Firm> firmsColl) {
+		System.out.println("f p q pq");
+
+		firmsColl.stream().forEach(f -> System.out.println("f" + f.getFirmNumID() + " " + f.getPrice() + " "
+				+ f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
 	}
 
 }

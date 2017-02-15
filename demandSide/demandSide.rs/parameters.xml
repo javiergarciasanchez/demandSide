@@ -22,13 +22,13 @@
 		type="int" defaultValue="30" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
 	<parameter name="fixedCostMean" displayName="Fixed Cost Mean"
-		type="double" defaultValue="100.0" isReadOnly="false"
+		type="double" defaultValue="0" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 	<parameter name="qualityDiscountMean" displayName="Quality Discount: Mean"
-		type="double" defaultValue="0.6" isReadOnly="false"
+		type="double" defaultValue="0.998" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 	<parameter name="qualityDiscountMostLikely" displayName="Quality Discount: Most Likely value"
-		type="double" defaultValue="0.7" isReadOnly="false"
+		type="double" defaultValue="0.999" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 	<parameter name="minimumProfit" displayName="Minimum profit to exit"
 		type="double" defaultValue="-80.0" isReadOnly="false"
@@ -47,9 +47,6 @@
 		displayName="Recognition Threshold for Expectations Firms to start maximizing"
 		type="double" defaultValue="0.5" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="defaultPriceStep" displayName="Default Price Adjustment"
-		type="double" defaultValue="1.0" isReadOnly="true"
-		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 	<parameter name="defaultQualityStep" displayName="Default Quality Adjustment"
 		type="double" defaultValue="1.0" isReadOnly="true"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
@@ -66,7 +63,7 @@
 		type="int" defaultValue="400" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
 	<parameter name="firmsEntryOnlyAtStart" displayName="Firms Entry only at Start?"
-		type="boolean" defaultValue="false" isReadOnly="false"
+		type="boolean" defaultValue="true" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter" />
 
 	<parameter name="currentProfitWeight"

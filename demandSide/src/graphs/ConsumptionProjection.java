@@ -1,11 +1,14 @@
 package graphs;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
+
+import org.apache.commons.math3.util.FastMath;
+
 import consumers.Consumer;
 import consumers.Consumers;
 import consumers.Pareto;
 import firms.Firm;
-import firms.Offer;
+import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -47,8 +50,8 @@ public class ConsumptionProjection {
 
 	private int margUtilToCoord(double margUtilOfQuality) {
 
-		return (int) Math.min(
-				Math.round(margUtilOfQuality / getMaxUtilToDraw()
+		return (int) FastMath.min(
+				FastMath.round(margUtilOfQuality / getMaxUtilToDraw()
 						* (MAX_Y - MIN_Y))
 						+ MIN_Y, MAX_Y);
 	}
@@ -66,15 +69,15 @@ public class ConsumptionProjection {
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getMinPrice())
-				/ (Offer.getMaxPrice() - Offer.getMinPrice()) * (MAX_X - MIN_X)
+		return (price - Offer.getAbsoluteMinPrice())
+				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
 	private double qualityToCoord(double quality) {
 		return MAX_Z
-				- ((quality - Offer.getMinQuality())
-						/ (Offer.getMaxQuality() - Offer.getMinQuality())
+				- ((quality - Offer.getAbsoluteMinQuality())
+						/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
 						* (MAX_Z - MIN_Z) + MIN_Z);
 	}
 

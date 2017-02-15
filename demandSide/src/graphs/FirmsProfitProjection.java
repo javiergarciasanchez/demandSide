@@ -1,8 +1,10 @@
 package graphs;
 
+import org.apache.commons.math3.util.FastMath;
+
 import firms.Firm;
 import firms.Firms;
-import firms.Offer;
+import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -38,22 +40,22 @@ public class FirmsProfitProjection {
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getMinPrice())
-				/ (Offer.getMaxPrice() - Offer.getMinPrice()) * (MAX_X - MIN_X)
+		return (price - Offer.getAbsoluteMinPrice())
+				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
 	private double profitToCoord(double profit) {
-		double profitCoord = Math.min(MAX_PROFIT_TO_DRAW,
-				Math.max(profit, MIN_PROFIT_TO_DRAW)) + ( -MIN_PROFIT_TO_DRAW );
+		double profitCoord = FastMath.min(MAX_PROFIT_TO_DRAW,
+				FastMath.max(profit, MIN_PROFIT_TO_DRAW)) + ( -MIN_PROFIT_TO_DRAW );
 		return profitCoord / (MAX_PROFIT_TO_DRAW - MIN_PROFIT_TO_DRAW)
 				 * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
 	private double qualityToCoord(double quality) {
 		return MAX_Z
-				- ((quality - Offer.getMinQuality())
-						/ (Offer.getMaxQuality() - Offer.getMinQuality())
+				- ((quality - Offer.getAbsoluteMinQuality())
+						/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
 						* (MAX_Z - MIN_Z) + MIN_Z);
 	}
 

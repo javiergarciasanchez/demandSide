@@ -1,14 +1,15 @@
 package consumers;
 
-import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.util.FastMath;
+
 import firms.Firm;
-import firms.Offer;
-import pHX_2.Market;
-import pHX_2.RecessionsHandler;
-import pHX_2.RunPriority;
+import offer.Offer;
+import demandSide.Market;
+import demandSide.RecessionsHandler;
+import demandSide.RunPriority;
 import repast.simphony.engine.schedule.ScheduledMethod;
 
 public class Consumer {
@@ -56,30 +57,28 @@ public class Consumer {
 
 		// There is no need to introduce a marginal utility of money
 		// because it is implicit in the marginal utility of quality
-		margUtilOfQuality = Consumers.getMargUtilOfQualityDistrib()
-				.nextDouble();
+		margUtilOfQuality = Consumers.getMargUtilOfQualityDistrib().nextDouble();
 
 		// Upper limit is unbounded. The max marg utility is updated to scale
 		// graphs
-		Consumers.setMaxMargUtilOfQuality(Math.max(
-				Consumers.getMaxMargUtilOfQuality(), margUtilOfQuality));
+		Consumers.setMaxMargUtilOfQuality(FastMath.max(Consumers.getMaxMargUtilOfQuality(), margUtilOfQuality));
 
 	}
 
 	private void setQualityDiscount() {
-		// 1.0 could not being assigned because a value of 1.0 is considered 
+		// 1.0 could not being assigned because a value of 1.0 is considered
 		// the consumer has already tried the firm
 		qualityDiscount = Consumers.getQualityDicountDistrib().nextDouble();
 
-		if (qualityDiscount == 1.0)
-			qualityDiscount = Math.nextDown(qualityDiscount);
+		if (getQualityDiscount() == 1.0)
+			qualityDiscount = FastMath.nextDown(getQualityDiscount());
 
 	}
 
 	public void addToKnownFirms(Firm f) {
 		// It is assumed that firm was not known,
 		// thus quality factor is quality discount
-		knownFirmsQualityFactor.put(f, qualityDiscount);
+		knownFirmsQualityFactor.put(f, getQualityDiscount());
 	}
 
 	public void addToTriedFirms(Firm f) {
@@ -95,7 +94,7 @@ public class Consumer {
 		if (chosenFirm != null) {
 			// Increase Demand
 			chosenFirm.setDemand(chosenFirm.getDemand() + 1);
-			
+
 			// Check if first time chosen
 			if (knownFirmsQualityFactor.get(chosenFirm) != 1.0) {
 				chosenFirm.addNewConsumer();
@@ -136,38 +135,17 @@ public class Consumer {
 		Offer o = knownFirm.getKey().getOffer();
 		double qualityFactor = knownFirm.getValue();
 
-		return margUtilOfQuality * o.getQuality() * qualityFactor
-				- o.getPrice();
-	}
-
-	private Color getChosenFirmColor() {
-		if (chosenFirm == null)
-			return Color.BLACK;
-		else
-			return chosenFirm.getColor();
+		return margUtilOfQuality * o.getQuality() * qualityFactor - o.getPrice();
 	}
 
 	public void removeTraceOfFirm(Firm firm) {
 		knownFirmsQualityFactor.remove(firm);
 
-		if ((chosenFirm != null)
-				&& (chosenFirm.getFirmIntID() == firm.getFirmIntID()))
+		if ((chosenFirm != null) && (chosenFirm.getFirmIntID() == firm.getFirmIntID()))
 			chosenFirm = null;
 	}
 
 	// Procedures for inspecting values
-
-	public int getRed() {
-		return getChosenFirmColor().getRed();
-	}
-
-	public int getBlue() {
-		return getChosenFirmColor().getBlue();
-	}
-
-	public int getGreen() {
-		return getChosenFirmColor().getGreen();
-	}
 
 	public Firm getChosenFirm() {
 		return chosenFirm;
@@ -196,8 +174,7 @@ public class Consumer {
 		if (chosenFirm == null)
 			return 0.0;
 		else
-			return utility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm,
-					knownFirmsQualityFactor.get(chosenFirm)));
+			return utility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm, knownFirmsQualityFactor.get(chosenFirm)));
 
 	}
 
@@ -215,6 +192,10 @@ public class Consumer {
 
 	public String toString() {
 		return ID;
+	}
+
+	public double getQualityDiscount() {
+		return qualityDiscount;
 	}
 
 }

@@ -1,6 +1,9 @@
 package graphs;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
+
+import org.apache.commons.math3.util.FastMath;
+
 import consumers.Consumer;
 import consumers.Consumers;
 import consumers.Pareto;
@@ -32,7 +35,7 @@ public class ConsumersProjection {
 	}
 
 	private double margUtilToCoord(double margUtilOfQuality) {
-		return Math.min(margUtilOfQuality / getMaxUtilToDraw()
+		return FastMath.min(margUtilOfQuality / getMaxUtilToDraw()
 				* (MAX_X - MIN_X) + MIN_X, MAX_X);
 	}
 
