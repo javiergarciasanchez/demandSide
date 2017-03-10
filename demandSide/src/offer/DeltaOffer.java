@@ -7,23 +7,23 @@ public class DeltaOffer {
 	private double deltaQuality;
 
 	public DeltaOffer(double p, double q) {
-		setPrice(p);
-		setQuality(q);
+		setDeltaPrice(p);
+		setDeltaQuality(q);
 	}
 
-	public double getPrice() {
+	public double getDeltaPrice() {
 		return deltaPrice;
 	}
 
-	public double getQuality() {
+	public double getDeltaQuality() {
 		return deltaQuality;
 	}
 
-	public void setPrice(double price) {
+	public void setDeltaPrice(double price) {
 		this.deltaPrice = price;
 	}
 
-	public void setQuality(double quality) {
+	public void setDeltaQuality(double quality) {
 		this.deltaQuality = quality;
 	}
 
@@ -31,22 +31,22 @@ public class DeltaOffer {
 		return new Offer(of.getPrice() + deltaPrice, of.getQuality() + deltaQuality);
 	}
 
-	public static DeltaOfferCompare deltaOfferCompare(DeltaOffer dOffer1, DeltaOffer dOffer2) {
-		
-		double priceSign = FastMath.signum(dOffer1.getPrice() * dOffer2.getPrice());
-		double qualitySign = FastMath.signum(dOffer1.getQuality() * dOffer2.getQuality());
+	public static DeltaOfferSignCompare deltaOfferCompare(DeltaOffer dOffer1, DeltaOffer dOffer2) {
+
+		double priceSign = FastMath.signum(dOffer1.getDeltaPrice() * dOffer2.getDeltaPrice());
+		double qualitySign = FastMath.signum(dOffer1.getDeltaQuality() * dOffer2.getDeltaQuality());
 
 		if ((priceSign == -1) && (qualitySign == -1))
-			return DeltaOfferCompare.BOTH_UNEQUAL;
+			return DeltaOfferSignCompare.BOTH_UNEQUAL;
 
 		else if ((priceSign == 1) && (qualitySign == -1))
-			return DeltaOfferCompare.UNEQUAL_QUALITY;
+			return DeltaOfferSignCompare.UNEQUAL_QUALITY;
 
 		else if ((priceSign == -1) && (qualitySign == 1))
-			return DeltaOfferCompare.UNEQUAL_PRICE;
+			return DeltaOfferSignCompare.UNEQUAL_PRICE;
 
 		else
-			return DeltaOfferCompare.BOTH_EQUAL;
+			return DeltaOfferSignCompare.BOTH_EQUAL;
 
 	}
 

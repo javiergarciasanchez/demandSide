@@ -9,6 +9,7 @@ public class RunPriority {
 	// Every step
 	public static final double MAKE_OFFER_PRIORITY = 80;
 	public static final double ADD_FIRMS_PRIORITY = 70;
+	public static final double RESET_DEMAND_PRIORITY = 65;
 	public static final double CHOOSE_FIRM_PRIORITY = 60;
 	public static final double NEXT_STEP_FIRM_PRIORITY = 50;
 	public static final double KILL_FIRMS_PRIORITY = 40;

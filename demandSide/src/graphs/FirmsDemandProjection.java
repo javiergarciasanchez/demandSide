@@ -3,7 +3,6 @@ package graphs;
 import consumers.Consumers;
 import firms.Firm;
 import firms.Firms;
-import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -11,8 +10,8 @@ import repast.simphony.space.continuous.StickyBorders;
 
 public class FirmsDemandProjection {
 
-	private static final double MAX_X = 100, MAX_Y = 100, MAX_Z = 100;
-	private static final double MIN_X = 0, MIN_Y = 0, MIN_Z = 0;
+	private static final double MAX_X = 100., MAX_Y = 100., MAX_Z = 100.;
+	private static final double MIN_X = 0., MIN_Y = 0., MIN_Z = 0.;
 
 	private ContinuousSpace<Firm> space;
 
@@ -37,18 +36,18 @@ public class FirmsDemandProjection {
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getAbsoluteMinPrice())
-				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
+		return (price - Scale.getMinPrice())
+				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
 	private double demandToCoord(int demand) {
-		return (double)demand / Consumers.getMarketSize() * (MAX_Y - MIN_Y) + MIN_Y;
+		return (double)demand / (double) Consumers.getMarketSize() * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
 	private double qualityToCoord(double quality) {
-		return MAX_Z - ((quality - Offer.getAbsoluteMinQuality())
-				/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
+		return MAX_Z - ((quality - Scale.getMinQuality())
+				/ (Scale.getMaxQuality() - Scale.getMinQuality())
 				* (MAX_Z - MIN_Z) + MIN_Z);
 	}
 

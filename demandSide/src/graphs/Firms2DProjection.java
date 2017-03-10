@@ -2,7 +2,6 @@ package graphs;
 
 import firms.Firm;
 import firms.Firms;
-import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -21,28 +20,25 @@ public class Firms2DProjection {
 		dims[0] = MAX_X + 0.1;
 		dims[1] = MAX_Y + 0.1;
 
-		space = new ContextSpace<Firm>("Firms2DProjection",
-				new SimpleCartesianAdder<Firm>(), new StickyBorders(), dims);
+		space = new ContextSpace<Firm>("Firms2DProjection", new SimpleCartesianAdder<Firm>(), new StickyBorders(),
+				dims);
 
 		firms.addProjection(space);
 
 	}
 
 	public void update(Firm firm) {
-		space.moveTo(firm, priceToCoord(firm.getPrice()),
-				qualityToCoord(firm.getQuality()));
+		space.moveTo(firm, priceToCoord(firm.getPrice()), qualityToCoord(firm.getQuality()));
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getAbsoluteMinPrice())
-				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
-				+ MIN_X;
+		return (price - Scale.getMinPrice()) / (Scale.getMaxPrice() - Scale.getMinPrice())
+				* (MAX_X - MIN_X) + MIN_X;
 	}
 
 	private double qualityToCoord(double quality) {
-		return (quality - Offer.getAbsoluteMinQuality())
-				/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
-				* (MAX_Y - MIN_Y) + MIN_Y;
+		return (quality - Scale.getMinQuality())
+				/ (Scale.getMaxQuality() - Scale.getMinQuality()) * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
 }

@@ -13,6 +13,7 @@ import decisionTools.NoPrice;
 import decisionTools.OptimalPrice;
 import demandSide.Market;
 import demandSide.RunPriority;
+import graphs.Scale;
 import offer.Offer;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.essentials.RepastEssentials;
@@ -73,19 +74,20 @@ public class Firm {
 
 	private boolean makeInitialOffer() {
 
-		try {
-			double q = getRandomInitialQuality();
-			double p;
-			p = getOptimalPriceGivenRealQ(q);
-			offer.setPrice(p);
-			offer.setQuality(q);
-			Market.firms.addToFirmLists(this);
-			initializeConsumerKnowledge();
-			return true;
+		double q = getRandomInitialQuality();
+		double p;
 
+		try {
+			p = getOptimalPriceGivenRealQ(q);
 		} catch (NoPrice e) {
 			return false;
 		}
+
+		offer.setPrice(p);
+		offer.setQuality(q);
+		Market.firms.addToFirmLists(this);
+		initializeConsumerKnowledge();
+		return true;
 
 	}
 
@@ -116,7 +118,12 @@ public class Firm {
 	}
 
 	private double getRandomInitialQuality() {
-		return RandomHelper.nextDoubleFromTo(Offer.getAbsoluteMinQuality(), Offer.getMaxInitialQuality());
+		return RandomHelper.nextDoubleFromTo(0.0, Offer.getMaxInitialQuality());
+	}
+	
+	@ScheduledMethod(start = 1, priority = RunPriority.RESET_DEMAND_PRIORITY, interval = 1)
+	public void resetDemand(){
+		demand = 0;
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1)
@@ -180,19 +187,22 @@ public class Firm {
 
 		if (isToBeKilled())
 			Market.toBeKilled.add(this);
-		/*
-		 * else // Updates Projections of results updateProjections();
-		 */
+
+		else
+			// Updates Projections of results
+			updateProjections();
+
 	}
 
-	/*
-	 * @ScheduledMethod(start = 1, priority =
-	 * RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1) public void
-	 * updateProjections() { Market.firms2DProjection.update(this);
-	 * Market.firmsDemandProjection.update(this);
-	 * Market.firmsProfitProjection.update(this); //
-	 * Market.margUtilProjection.update(this); }
-	 */
+	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
+	public void updateProjections() {
+		Scale.update(this);
+		Market.firms2DProjection.update(this);
+		Market.firmsDemandProjection.update(this);
+		Market.firmsProfitProjection.update(this); //
+		Market.margUtilProjection.update(this);
+	}
+
 	private void initializeConsumerKnowledge() {
 
 		notYetKnownBy.addAll(Market.consumers);
@@ -244,7 +254,7 @@ public class Firm {
 	private double calcProfit() {
 		return (getPrice() - calcUnitCost(getQuality())) * getDemand() - fixedCost;
 	}
-		
+
 	public double calcUnitCost(double quality) {
 		// Cost grows quadratically with quality
 		return FastMath.pow(quality / costParameter, 2.0);
@@ -253,7 +263,6 @@ public class Firm {
 	public double getMarginalCostOfQuality(double q) {
 		return 2.0 / FastMath.pow(costParameter, 2.0) * q;
 	}
-	
 
 	private boolean isToBeKilled() {
 		// Returns true if firm should exit the market
@@ -300,10 +309,6 @@ public class Firm {
 		Market.firms.addToFirmLists(this);
 	}
 
-	/*
-	 * Getters to probe
-	 */
-
 	public double getExpectedMargin() {
 		return Market.firms.perceivedQSegments.getExpectedDemand(this)
 				* (offer.getPrice() - calcUnitCost(offer.getQuality()));
@@ -312,6 +317,10 @@ public class Firm {
 	public double getExpectedProfit() {
 		return getExpectedMargin() - fixedCost;
 	}
+
+	/*
+	 * Getters to probe
+	 */
 
 	public int getDemand() {
 		return demand;

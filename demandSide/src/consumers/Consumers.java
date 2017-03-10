@@ -23,7 +23,6 @@ public class Consumers extends DefaultContext<Consumer> {
 	private static Beta qualityDiscountDistrib;
 	private static int mktSize;
 
-
 	public static void resetStaticVars() {
 		minMargUtilOfQuality = 0.0;
 		maxMargUtilOfQuality = 0.0;
@@ -70,7 +69,7 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static double getExpectedConsumersAbove(double margUtil) {
 
-		if (margUtil < minMargUtilOfQuality)
+		if (margUtil <= minMargUtilOfQuality)
 			return mktSize;
 		else
 			return mktSize * FastMath.pow(minMargUtilOfQuality / margUtil, lambda);
@@ -103,57 +102,22 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static double expectedQuantity(Offer segOffer, Offer segLowOffer, Offer segHighOffer) {
 
-		double loLimit, hiLimit;
+		if (segOffer == null)
+			throw new Error("Can not calculate demand of null Offer");
+
+		double demandAboveLoLimit, demandAboveHiLimit;
 
 		if (segLowOffer == null)
-			loLimit = getMinMargUtilOfQuality();
+			demandAboveLoLimit = Consumers.getMarketSize();
 		else
-			loLimit = Consumers.limit(segLowOffer, segOffer);
+			demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(segLowOffer, segOffer));
 
 		if (segHighOffer == null)
-			return getExpectedConsumersAbove(loLimit);
-
-		else {
-			hiLimit = Consumers.limit(segOffer, segHighOffer);
-			
-			if (loLimit < hiLimit)
-				return getExpectedConsumersAbove(loLimit) - getExpectedConsumersAbove(hiLimit);
-			else
-				return 0.0;
-
-		}
-
-	}
-
-	/*
-	 * Calculates the marginal utility of quality that divides consumer
-	 * preferences. Consumers with a marginal utility of quality (muq) below
-	 * "limit" will choose loOffer, while the ones with higher (muq) would
-	 * choose hiOffer
-	 */
-	public static double limit(Offer loOffer, Offer hiOffer) {
-
-		if (loOffer == null)
-			return Consumers.getMinMargUtilOfQuality();
-
-		if (hiOffer == null)
-			return Double.POSITIVE_INFINITY;
-
-		double loQ, hiQ;
-		loQ = loOffer.getQuality();
-		hiQ = hiOffer.getQuality();
-
-		if (loQ >= hiQ)
-			throw new Error("loOffer should have lower quality than hiOffer");
-
-		double loP, hiP;
-		loP = loOffer.getPrice();
-		hiP = hiOffer.getPrice();
-
-		if (hiP < loP)
-			return Consumers.getMinMargUtilOfQuality();
+			demandAboveHiLimit = 0.0;
 		else
-			return FastMath.max((hiP - loP) / (hiQ - loQ), Consumers.getMinMargUtilOfQuality());
+			demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(segOffer, segHighOffer));
+
+		return demandAboveLoLimit - demandAboveHiLimit;
 
 	}
 
@@ -163,6 +127,16 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static void setLambda(double lambda) {
 		Consumers.lambda = lambda;
+	}
+
+	public static double deltaPrice(Offer loOf, Offer hiOf) {
+		// low Offer could be null
+		return hiOf.getPrice() - ((loOf == null) ? 0. : loOf.getPrice());
+	}
+
+	public static double deltaQuality(Offer loOf, Offer hiOf) {
+		// low Offer could be null
+		return hiOf.getQuality() - ((loOf == null) ? 0. : loOf.getQuality());
 	}
 
 }

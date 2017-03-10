@@ -8,13 +8,9 @@
 		displayName="Fixed Cost Standard Deviation as Percent of Mean" type="double"
 		defaultValue="0.05" isReadOnly="true"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="maxQuality" displayName="Maximum Quality"
+	<parameter name="maxInitialQuality" displayName="Maximum Initial Quality"
 		type="double" defaultValue="100.0" isReadOnly="true"
-		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="initialMaxPrice" displayName="Initial Max Price"
-		type="double" defaultValue="100.0" isReadOnly="false"
-		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="margUtilPercentToDraw"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" /><parameter name="margUtilPercentToDraw"
 		displayName="Max Percentile to Draw of Marg Util of Quality" type="double"
 		defaultValue="0.98" isReadOnly="true"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
@@ -80,11 +76,7 @@
 		defaultValue="500.0" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 
-	<parameter name="minQuality" displayName="Minimum Quality"
-		type="double" defaultValue="1.0" isReadOnly="true"
-		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="minPrice" displayName="Minimum Price" type="double"
-		defaultValue="1.0" isReadOnly="true"
-		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	
+	
 
 </parameters>

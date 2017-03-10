@@ -7,7 +7,7 @@ import org.apache.commons.math3.util.FastMath;
 import firms.Firm;
 import firms.FirmsSegments;
 import offer.DeltaOffer;
-import offer.DeltaOfferCompare;
+import offer.DeltaOfferSignCompare;
 import offer.Offer;
 
 public class ImprovingDeltaOffer {
@@ -26,20 +26,20 @@ public class ImprovingDeltaOffer {
 		 * changes reduces step to one half
 		 */
 		DeltaOffer nextDeltaOffer = getImprovingDeltaOffer(f, seg, deltaOffer.addTo(currOffer));
-		DeltaOfferCompare comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
+		DeltaOfferSignCompare comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
 
-		while (comp != DeltaOfferCompare.BOTH_EQUAL) {
+		while (comp != DeltaOfferSignCompare.BOTH_EQUAL) {
 
 			switch (comp) {
 			case BOTH_UNEQUAL:
-				deltaOffer.setPrice(deltaOffer.getPrice() / 2.);
-				deltaOffer.setQuality(deltaOffer.getQuality() / 2.);
+				deltaOffer.setDeltaPrice(deltaOffer.getDeltaPrice() / 2.);
+				deltaOffer.setDeltaQuality(deltaOffer.getDeltaQuality() / 2.);
 				break;
 			case UNEQUAL_PRICE:
-				deltaOffer.setPrice(deltaOffer.getPrice() / 2.);
+				deltaOffer.setDeltaPrice(deltaOffer.getDeltaPrice() / 2.);
 				break;
 			case UNEQUAL_QUALITY:
-				deltaOffer.setQuality(deltaOffer.getQuality() / 2.);
+				deltaOffer.setDeltaQuality(deltaOffer.getDeltaQuality() / 2.);
 				break;
 			case BOTH_EQUAL:
 				break;
@@ -74,17 +74,16 @@ public class ImprovingDeltaOffer {
 
 	private static MarginalProfit getMarginalProfit(Firm f, Offer realOffer, FirmsSegments seg) {
 
-		double realQ = realOffer.getQuality();
-
-		// Marginal profit depends on segment quality
-		Offer segOffer = new Offer(realOffer.getPrice(), seg.getQuality(f, realQ));
-
 		// Cost and marginal cost depend always on real quality
+		double realQ = realOffer.getQuality();
 		double cost = f.calcUnitCost(realQ);
 		double marginalCost = f.getMarginalCostOfQuality(realQ);
-
-		Offer loLimitOffer = seg.getOffer(seg.lower(f));
-		Offer hiLimitOffer = seg.getOffer(seg.higher(f));
+		
+		// Marginal profit and segment neighbors depend on segment quality
+		double segQ = seg.getQuality(f, realQ);
+		Offer segOffer = new Offer(realOffer.getPrice(), segQ);
+		Offer loLimitOffer = seg.getOffer(seg.getLowerFirmGivenQ(segQ));
+		Offer hiLimitOffer = seg.getOffer(seg.getHigherFirmGivenQ(segQ));
 
 		MarginalProfit mgProf = new MarginalProfit(segOffer, cost, marginalCost, loLimitOffer, hiLimitOffer);
 

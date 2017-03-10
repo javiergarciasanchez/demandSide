@@ -104,7 +104,7 @@ public class Consumer {
 
 	}
 
-	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
+//	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
 	public void updateProjections() {
 		Market.consumersProjection.update(this);
 		Market.margUtilProjection.update(this);

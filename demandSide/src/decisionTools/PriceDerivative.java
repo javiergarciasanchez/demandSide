@@ -13,19 +13,36 @@ public class PriceDerivative implements UnivariateDifferentiableFunction {
 	double q;
 	Offer loLimitOffer, hiLimitOffer;
 	double cost;
+	double loLimit, hiLimit;
 
-	public PriceDerivative(FirmsSegments seg, double q, double cost, Offer loLimitOffer, Offer hiLimitOffer) {
+	public PriceDerivative(FirmsSegments seg, double q, double cost, Offer loLimitOffer, Offer hiLimitOffer,
+			double loLimit, double hiLimit) {
 		this.seg = seg;
 		this.q = q;
 		this.cost = cost;
 		this.loLimitOffer = loLimitOffer;
 		this.hiLimitOffer = hiLimitOffer;
+		this.loLimit = loLimit;
+		this.hiLimit = hiLimit;
+
 	}
 
 	@Override
 	public double value(double p) {
-		Offer of = new Offer(p, q);
-		return MarginalProfit.respectToPrice(of, cost, loLimitOffer, hiLimitOffer);
+
+		// Need to check if price is meaningfull, otherwise return infinity
+		// value
+		if (p < loLimit)
+			return Double.POSITIVE_INFINITY;
+
+		else if (p > hiLimit)
+			return Double.NEGATIVE_INFINITY;
+
+		else {
+			Offer of = new Offer(p, q);
+			return MarginalProfit.respectToPrice(of, cost, loLimitOffer, hiLimitOffer);
+		}
+
 	}
 
 	@Override
@@ -33,12 +50,12 @@ public class PriceDerivative implements UnivariateDifferentiableFunction {
 
 		double[] f = new double[2];
 		double p = t.getValue();
-		
+
 		f[0] = value(p);
-		
+
 		Offer of = new Offer(p, q);
 		f[1] = MarginalProfit.respectToPriceTwice(of, cost, loLimitOffer, hiLimitOffer);
-				
+
 		return t.compose(f);
 	}
 

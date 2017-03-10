@@ -9,7 +9,7 @@ import graphs.Firms2DProjection;
 import graphs.FirmsDemandProjection;
 import graphs.FirmsProfitProjection;
 import graphs.MargUtilProjection;
-import offer.Offer;
+import graphs.Scale;
 
 import java.util.ArrayList;
 
@@ -56,7 +56,7 @@ public class Market extends DefaultContext<Object> implements
 		Consumer.resetStaticVars();
 		Consumers.resetStaticVars();
 		Firm.resetStaticVars();
-		Offer.resetStaticVars();
+		Scale.resetStaticVars();
 
 		// Initialize ToBeKilled
 		toBeKilled = new ArrayList<Firm>();
@@ -84,13 +84,13 @@ public class Market extends DefaultContext<Object> implements
 		// Create firms
 		firms = new Firms();
 		context.addSubContext(firms);
-/*
+
 		// Firms Projections
 		// Dimensions are price, quality and consumers
 		firms2DProjection = new Firms2DProjection(firms);
 		firmsDemandProjection = new FirmsDemandProjection(firms);
 		firmsProfitProjection = new FirmsProfitProjection(firms);
-*/
+
 		return context;
 
 	}

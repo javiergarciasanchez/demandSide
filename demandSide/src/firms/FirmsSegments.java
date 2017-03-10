@@ -59,17 +59,8 @@ public abstract class FirmsSegments extends TreeSet<Firm> {
 		Firm lo = lower(f);
 		Firm hi = higher(f);
 
-		if (hi == null)
-			// f has the highest quality
-			return true;
-
-		// Note that limit could return positive infinity
-		else if (lo == null) {
-			return (Consumers.getMinMargUtilOfQuality() < Consumers.limit(getOffer(f), getOffer(hi)));
-		}
-
-		else
-			return Consumers.limit(getOffer(lo), getOffer(f)) < Consumers.limit(getOffer(f), getOffer(hi));
+		// limit takes into account the possibility of offers being null
+		return Offer.limit(getOffer(lo), getOffer(f)) < Offer.limit(getOffer(f), getOffer(hi));
 
 	}
 
@@ -103,12 +94,7 @@ public abstract class FirmsSegments extends TreeSet<Firm> {
 		if (f == null)
 			throw new Error("Firm value cannot be null");
 
-		Firm loF = lower(f);
-
-		if (loF == null)
-			return Consumers.getMinMargUtilOfQuality();
-		else
-			return Consumers.limit(getOffer(loF), getOffer(f));
+		return Offer.limit(getOffer(lower(f)), getOffer(f));
 
 	}
 
@@ -116,22 +102,17 @@ public abstract class FirmsSegments extends TreeSet<Firm> {
 		if (f == null)
 			throw new Error("Firm value cannot be null");
 
-		Firm hiF = higher(f);
-
-		if (hiF == null)
-			return Double.POSITIVE_INFINITY;
-		else
-			return Consumers.limit(getOffer(f), getOffer(hiF));
+		return Offer.limit(getOffer(f), getOffer(higher(f)));
 
 	}
 
-	public Firm lowerFirmGivenQ(double q) {
+	public Firm getLowerFirmGivenQ(double q) {
 
 		return stream().filter(f -> getQuality(f) < q).max(comparator()).orElse(null);
 
 	}
-	
-	public Firm higherFirmGivenQ(double q) {
+
+	public Firm getHigherFirmGivenQ(double q) {
 
 		return stream().filter(f -> getQuality(f) > q).findFirst().orElse(null);
 
@@ -146,19 +127,20 @@ public abstract class FirmsSegments extends TreeSet<Firm> {
 
 	}
 
-
-	// Note that it could return positive infinity
+	// Note that it could return negative infinity
 	public double getPriceToExpel(double q, Firm f) {
 		if (f == null)
 			throw new Error("Cannot get a price to expel null firm");
+		
 
 		double qF = getQuality(f);
+		
 		if (q == qF)
 			return f.getPrice() - Double.MIN_NORMAL;
-		else if (q < qF)
+		else if (qF < q)
 			return f.getPrice() + getLoLimit(f) * (q - qF);
 		else
-			return f.getPrice() + getHiLimit(f) * (q - qF);
+			return f.getPrice() - getHiLimit(f) * (qF - q);
 	}
-	
+
 }

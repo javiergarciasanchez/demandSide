@@ -29,8 +29,7 @@ public class MargUtilProjection {
 		dims[0] = MAX_X + 1;
 		dims[1] = MAX_Y + FIRMS_HEIGHT + 1;
 
-		space = new ContextGrid<Object>("MargUtilProjection",
-				new SimpleGridAdder<Object>(), new StickyBorders(),
+		space = new ContextGrid<Object>("MargUtilProjection", new SimpleGridAdder<Object>(), new StickyBorders(),
 				new SingleOccupancyCellAccessor<Object>(), dims);
 
 		context.addProjection(space);
@@ -43,18 +42,20 @@ public class MargUtilProjection {
 
 	}
 
-/*	public void update(Firm f) {
+	public void update(Firm f) {
 
-		int x = margUtilToCoord(Utils.getPoorestConsumerMargUtil(
-				f.getQuality(), f.getPrice()));
+		int x = margUtilToCoord(getPoorestConsumerMargUtil(f.getQuality(), f.getPrice()));
 
 		space.moveTo(f, x, getFreeY(x, 0, 2));
 
 	}
 
+	private double getPoorestConsumerMargUtil(double quality, double price) {
+		return price / quality;
+	}
+/*
 	public void add(SegmentLimitOLD sL) {
-		double val = Math.min(sL.getValue(),
-				Consumers.getMaxMargUtilOfQuality());
+		double val = Math.min(sL.getValue(), Consumers.getMaxMargUtilOfQuality());
 		int x = margUtilToCoord(val);
 
 		space.moveTo(sL, x, getFreeY(x, FIRMS_HEIGHT, 2));
@@ -63,10 +64,8 @@ public class MargUtilProjection {
 */
 	private int margUtilToCoord(double margUtilOfQuality) {
 
-		return (int) FastMath.min(
-				FastMath.round(margUtilOfQuality / getMaxUtilToDraw()
-						* (MAX_X - MIN_X))
-						+ MIN_X, MAX_X);
+		return (int) FastMath.min(FastMath.round(margUtilOfQuality / getMaxUtilToDraw() * (MAX_X - MIN_X)) + MIN_X,
+				MAX_X);
 	}
 
 	private double getMaxUtilToDraw() {

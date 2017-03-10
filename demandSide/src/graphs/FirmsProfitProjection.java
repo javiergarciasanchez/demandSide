@@ -4,7 +4,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import firms.Firm;
 import firms.Firms;
-import offer.Offer;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -40,8 +39,8 @@ public class FirmsProfitProjection {
 	}
 
 	private double priceToCoord(double price) {
-		return (price - Offer.getAbsoluteMinPrice())
-				/ (Offer.getAbsoluteMaxPrice() - Offer.getAbsoluteMinPrice()) * (MAX_X - MIN_X)
+		return (price - Scale.getMinPrice())
+				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
@@ -54,8 +53,8 @@ public class FirmsProfitProjection {
 
 	private double qualityToCoord(double quality) {
 		return MAX_Z
-				- ((quality - Offer.getAbsoluteMinQuality())
-						/ (Offer.getAbsoluteMaxQuality() - Offer.getAbsoluteMinQuality())
+				- ((quality - Scale.getMinQuality())
+						/ (Scale.getMaxQuality() - Scale.getMinQuality())
 						* (MAX_Z - MIN_Z) + MIN_Z);
 	}
 
