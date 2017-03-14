@@ -25,7 +25,7 @@ public class ImprovingDeltaOffer {
 		 * Check if after tentative steps any derivative changes sign If sign
 		 * changes reduces step to one half
 		 */
-		DeltaOffer nextDeltaOffer = getImprovingDeltaOffer(f, seg, deltaOffer.addTo(currOffer));
+		DeltaOffer nextDeltaOffer = getImprovingDeltaOffer(f, seg,  Offer.checkedAdd(f, currOffer, deltaOffer));
 		DeltaOfferSignCompare comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
 
 		while (comp != DeltaOfferSignCompare.BOTH_EQUAL) {
@@ -45,7 +45,7 @@ public class ImprovingDeltaOffer {
 				break;
 			}
 
-			nextDeltaOffer = getImprovingDeltaOffer(f, seg, deltaOffer.addTo(currOffer));
+			nextDeltaOffer = getImprovingDeltaOffer(f, seg,  Offer.checkedAdd(f, currOffer, deltaOffer));
 			comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
 
 		}
@@ -76,9 +76,9 @@ public class ImprovingDeltaOffer {
 
 		// Cost and marginal cost depend always on real quality
 		double realQ = realOffer.getQuality();
-		double cost = f.calcUnitCost(realQ);
+		double cost = f.getUnitCost(realQ);
 		double marginalCost = f.getMarginalCostOfQuality(realQ);
-		
+
 		// Marginal profit and segment neighbors depend on segment quality
 		double segQ = seg.getQuality(f, realQ);
 		Offer segOffer = new Offer(realOffer.getPrice(), segQ);
@@ -89,5 +89,5 @@ public class ImprovingDeltaOffer {
 
 		return mgProf;
 	}
-
+	
 }

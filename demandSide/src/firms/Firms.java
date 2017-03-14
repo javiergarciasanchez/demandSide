@@ -1,8 +1,7 @@
 package firms;
 
 import java.util.Collection;
-import java.util.TreeSet;
-
+import java.util.TreeMap;
 import org.apache.commons.math3.util.FastMath;
 
 import demandSide.Market;
@@ -24,8 +23,8 @@ public class Firms extends DefaultContext<Firm> {
 	double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
 
 	// Theoretical market based on perceived quality and price
-	public TreeSet<Firm> firmsByQ;
-	FirmsSegments realQSegments, perceivedQSegments;
+	public TreeMap<Double, Firm> firmsByQ;
+	FirmsSegments perceivedQSegments;
 
 	public Firms() {
 		super("Firms_Context");
@@ -56,23 +55,20 @@ public class Firms extends DefaultContext<Firm> {
 
 	public void createFirmLists() {
 
-		firmsByQ = new TreeSet<Firm>(new CompareByQ());
-		realQSegments = new FirmsRealQSegments();
+		firmsByQ = new TreeMap<Double, Firm>();
 		perceivedQSegments = new FirmsPerceivedQSegments();
 
 	}
 
 	public void addToFirmLists(Firm f) {
 
-		firmsByQ.add(f);
-		realQSegments.add(f);
+		firmsByQ.put(f.getQuality(), f);
 		perceivedQSegments.add(f);
 
 	}
 
 	public void removeFromFirmLists(Firm f) {
 
-		realQSegments.remove(f);
 		perceivedQSegments.remove(f);
 		firmsByQ.remove(f);
 

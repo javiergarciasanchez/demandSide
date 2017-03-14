@@ -74,6 +74,8 @@ public class Firm {
 
 	private boolean makeInitialOffer() {
 
+		// getRandomInitialQuality takes care that q should be different for
+		// different firms.
 		double q = getRandomInitialQuality();
 		double p;
 
@@ -110,7 +112,7 @@ public class Firm {
 	private double getOptimalPriceGivenRealQ(double q) throws NoPrice {
 
 		double perceivedQ = getPerceivedQuality(q);
-		double cost = calcUnitCost(q);
+		double cost = getUnitCost(q);
 		FirmsSegments seg = Market.firms.perceivedQSegments;
 
 		return OptimalPrice.get(seg, perceivedQ, cost);
@@ -118,11 +120,20 @@ public class Firm {
 	}
 
 	private double getRandomInitialQuality() {
-		return RandomHelper.nextDoubleFromTo(0.0, Offer.getMaxInitialQuality());
+		double q = RandomHelper.nextDoubleFromTo(0.0, Offer.getMaxInitialQuality());
+
+		if (Market.firms.firmsByQ.containsKey(q))
+			
+			if (q > Double.MIN_NORMAL)
+				q = q - Double.MIN_NORMAL;
+			else
+				q = q + Double.MIN_NORMAL;
+
+		return q;
 	}
-	
+
 	@ScheduledMethod(start = 1, priority = RunPriority.RESET_DEMAND_PRIORITY, interval = 1)
-	public void resetDemand(){
+	public void resetDemand() {
 		demand = 0;
 	}
 
@@ -140,7 +151,7 @@ public class Firm {
 				offer.setPrice(p);
 			} catch (NoPrice e) {
 				// No price to reenter, sets cost as price
-				offer.setPrice(calcUnitCost(getQuality()));
+				offer.setPrice(getUnitCost(getQuality()));
 			}
 		}
 
@@ -150,7 +161,7 @@ public class Firm {
 
 	protected void setNextOffer() {
 
-		offer.add(ImprovingDeltaOffer.get(this, Market.firms.perceivedQSegments));
+		offer = Offer.checkedAdd(this, getOffer(), ImprovingDeltaOffer.get(this, Market.firms.perceivedQSegments));
 
 	}
 
@@ -252,10 +263,10 @@ public class Firm {
 	}
 
 	private double calcProfit() {
-		return (getPrice() - calcUnitCost(getQuality())) * getDemand() - fixedCost;
+		return (getPrice() - getUnitCost(getQuality())) * getDemand() - fixedCost;
 	}
 
-	public double calcUnitCost(double quality) {
+	public double getUnitCost(double quality) {
 		// Cost grows quadratically with quality
 		return FastMath.pow(quality / costParameter, 2.0);
 	}
@@ -311,7 +322,7 @@ public class Firm {
 
 	public double getExpectedMargin() {
 		return Market.firms.perceivedQSegments.getExpectedDemand(this)
-				* (offer.getPrice() - calcUnitCost(offer.getQuality()));
+				* (offer.getPrice() - getUnitCost(offer.getQuality()));
 	}
 
 	public double getExpectedProfit() {
@@ -376,7 +387,7 @@ public class Firm {
 	}
 
 	public double getGrossMargin() {
-		return (getPrice() - calcUnitCost(getQuality())) / getPrice();
+		return (getPrice() - getUnitCost(getQuality())) / getPrice();
 	}
 
 	public double getMargin() {

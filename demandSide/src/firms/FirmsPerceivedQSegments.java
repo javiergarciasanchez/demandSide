@@ -11,10 +11,20 @@ public class FirmsPerceivedQSegments extends FirmsSegments {
 		@Override
 		public int compare(Firm f1, Firm f2) {
 
-			if (f1.equals(f2) || (f1.getPerceivedQuality(f1.getQuality()) == f2.getPerceivedQuality(f2.getQuality())))
+			if (f1.equals(f2))
 				return 0;
+
+			double q1 = f1.getQuality();
+			double q2 = f2.getQuality();
+
+			double pQ1 = f1.getPerceivedQuality(q1);
+			double pQ2 = f2.getPerceivedQuality(q2);
+
+			if (pQ1 == pQ2)
+				// perceived qualities are equal, using real quality to tie break
+				return (q1 < q2) ? -1 : 1;
 			else
-				return (f1.getPerceivedQuality(f1.getQuality()) < f2.getPerceivedQuality(f2.getQuality()) ? -1 : 1);
+				return (pQ1 < pQ2) ? -1 : 1;
 		}
 
 	}

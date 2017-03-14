@@ -5,6 +5,7 @@ import static repast.simphony.essentials.RepastEssentials.GetParameter;
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumers;
+import firms.Firm;
 
 public class Offer {
 
@@ -16,7 +17,7 @@ public class Offer {
 
 	public Offer(double p, double q) {
 		if (p<0 || q <0)
-			throw new Error("Price and quality shoulb be higher than zero");
+			throw new Error("Price and quality should be higher than zero");
 		
 		setQuality(q);
 		setPrice(p);
@@ -25,6 +26,20 @@ public class Offer {
 	public Offer(Offer offer) {
 		setQuality(offer.getQuality());
 		setPrice(offer.getPrice());
+	}
+	
+	public static Offer checkedAdd(Firm f, Offer of, DeltaOffer deltaOffer){
+		
+		// Quality should be higher than minQuality
+		double q = of.getQuality() + deltaOffer.getDeltaQuality();
+		q = FastMath.max(q, 0. + Double.MIN_NORMAL);
+
+		// Price should be higher than minPrice
+		double p = of.getPrice() + deltaOffer.getDeltaPrice();		
+		p = FastMath.max(p, f.getUnitCost(q) + Double.MIN_NORMAL);
+		
+		return new Offer(p, q);
+		
 	}
 
 	public static boolean equal(Offer of1, Offer of2) {
@@ -80,11 +95,6 @@ public class Offer {
 
 		}
 
-	}
-
-	public void add(DeltaOffer deltaOffer) {
-		price += deltaOffer.getDeltaPrice();
-		quality += deltaOffer.getDeltaQuality();
 	}
 
 	public void setQuality(double q) {

@@ -3,8 +3,13 @@ package decisionTools;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.analysis.solvers.NewtonRaphsonSolver;
-import org.apache.commons.math3.exception.TooManyEvaluationsException;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.MaxIter;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.BrentOptimizer;
+import org.apache.commons.math3.optim.univariate.SearchInterval;
+import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumers;
@@ -35,7 +40,7 @@ public class OptimalPrice {
 		Iterator<Firm> itByPriceToExpel = seg.stream().filter(f -> seg.getPriceToExpel(q, f) > cost)
 				.sorted(new CompareByPriceToExpel(seg, q)).collect(Collectors.toList()).iterator();
 
-		Firm loF = null;		
+		Firm loF = null;
 		double hiLimit = Double.POSITIVE_INFINITY;
 
 		double retval = 0.0, maxMargin = 0.0;
@@ -185,61 +190,20 @@ public class OptimalPrice {
 
 		Offer loOffer = seg.getOffer(loF);
 		Offer hiOffer = seg.getOffer(hiF);
-		PriceDerivative priceDeriv = new PriceDerivative(seg, q, cost, loOffer, hiOffer, loLimit, hiLimit);
+		
+		double rel = 1.e-3; // Relative threshold.
+		double abs = 1.e-6; // Absolute threshold.
+		
+		BrentOptimizer optim = new BrentOptimizer(rel, abs);
+		
+		ExpectedMargin expectedMargin = new ExpectedMargin( q, cost, loOffer, hiOffer);
+		
+		MaxEval maxEval = new MaxEval(100);
+		MaxIter maxIter = new MaxIter(100);
+		UnivariatePointValuePair retval = optim.optimize(new SearchInterval(loLimit, hiLimit), GoalType.MAXIMIZE, new UnivariateObjectiveFunction(expectedMargin), maxIter, maxEval );
+		
+		return retval.getPoint();
 
-		final double absAccuracy = 1e-3;
-		int maxEval = 100;
-		NewtonRaphsonSolver solver = new NewtonRaphsonSolver(absAccuracy);
-
-		try {
-
-			double retval = solver.solve(maxEval, priceDeriv, loLimit, hiLimit);
-
-			if (checkMax(seg, new Offer(retval, q), cost, loOffer, hiOffer))
-				return retval;
-			else
-				return getBestBorderSolution(loLimit, hiLimit, q, cost, loOffer, hiOffer);
-
-		} catch (TooManyEvaluationsException e) {
-
-			// It is assumed there is no maximum in the interval then the
-			// highest border is chosen
-			return getBestBorderSolution(loLimit, hiLimit, q, cost, loOffer, hiOffer);
-
-		}
-
-	}
-
-	private static boolean checkMax(FirmsSegments seg, Offer of, double cost, Offer loOffer, Offer hiOffer) {
-		// Checks that second derivative is negative
-
-		double lambda = Consumers.getLambda();
-		double alfa = (of.getPrice() - cost) * (lambda + 1);
-
-		double deltaLowPrice = Consumers.deltaPrice(loOffer, of);
-		double deltaLowQuality = Consumers.deltaQuality(loOffer, of);
-		double deltaHighPrice = Consumers.deltaPrice(of, hiOffer);
-		double deltaHighQuality = Consumers.deltaQuality(of, hiOffer);
-
-		return (((alfa - 2 * deltaLowPrice)
-				/ (alfa + 2 * deltaLowPrice)) < (FastMath.pow(deltaHighQuality / deltaLowQuality, lambda)
-						* FastMath.pow(deltaLowPrice / deltaHighPrice, lambda + 2)));
-
-	}
-
-	private static double getBestBorderSolution(double loPrice, double hiPrice, double q, double cost, Offer loOffer,
-			Offer hiOffer) {
-		double loPriceMargin = expectedMargin(loPrice, q, cost, loOffer, hiOffer);
-		double hiPriceMargin = expectedMargin(hiPrice, q, cost, loOffer, hiOffer);
-
-		if (loPriceMargin < hiPriceMargin)
-			return loPrice;
-		else
-			return hiPrice;
-	}
-
-	private static double expectedMargin(double p, double q, double cost, Offer loOffer, Offer hiOffer) {
-		return (p - cost) * Consumers.expectedQuantity(new Offer(p, q), loOffer, hiOffer);
 	}
 
 }

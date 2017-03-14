@@ -27,10 +27,6 @@ public class DeltaOffer {
 		this.deltaQuality = quality;
 	}
 
-	public Offer addTo(Offer of) {
-		return new Offer(of.getPrice() + deltaPrice, of.getQuality() + deltaQuality);
-	}
-
 	public static DeltaOfferSignCompare deltaOfferCompare(DeltaOffer dOffer1, DeltaOffer dOffer2) {
 
 		double priceSign = FastMath.signum(dOffer1.getDeltaPrice() * dOffer2.getDeltaPrice());
