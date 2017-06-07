@@ -8,21 +8,18 @@ import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumer;
 import consumers.Consumers;
-import decisionTools.ImprovingDeltaOffer;
-import decisionTools.NoPrice;
-import decisionTools.OptimalPrice;
 import demandSide.Market;
 import demandSide.RunPriority;
 import graphs.Scale;
+import improvingOffer.ImprovingOffer;
 import offer.Offer;
+import optimalPrice.NoPrice;
+import optimalPrice.OptimalPrice;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.essentials.RepastEssentials;
 import repast.simphony.random.RandomHelper;
 
 public class Firm {
-
-	protected double minConsumerMargUtil = Consumers.getMinMargUtilOfQuality();
-	protected double maxConsumerMargUtil = Consumers.getMaxMargUtilOfQuality();
 
 	public StrategicPreference stratPref;
 	private Offer offer;
@@ -84,6 +81,7 @@ public class Firm {
 		} catch (NoPrice e) {
 			return false;
 		}
+		
 
 		offer.setPrice(p);
 		offer.setQuality(q);
@@ -109,13 +107,12 @@ public class Firm {
 	 * lower the price the more competitors are expelled The lowest meaningful
 	 * price is marginal cost
 	 */
-	private double getOptimalPriceGivenRealQ(double q) throws NoPrice {
+	private double getOptimalPriceGivenRealQ(double realQ) throws NoPrice {
 
-		double perceivedQ = getPerceivedQuality(q);
-		double cost = getUnitCost(q);
-		FirmsSegments seg = Market.firms.perceivedQSegments;
+		double perceivedQ = getPerceivedQuality(realQ);
+		double cost = getUnitCost(realQ);
 
-		return OptimalPrice.get(seg, perceivedQ, cost);
+		return OptimalPrice.get(perceivedQ, cost, new FirmsPerceivedQSegments());
 
 	}
 
@@ -123,11 +120,11 @@ public class Firm {
 		double q = RandomHelper.nextDoubleFromTo(0.0, Offer.getMaxInitialQuality());
 
 		if (Market.firms.firmsByQ.containsKey(q))
-			
-			if (q > Double.MIN_NORMAL)
-				q = q - Double.MIN_NORMAL;
+
+			if (q > Double.MIN_VALUE)
+				q = q - Double.MIN_VALUE;
 			else
-				q = q + Double.MIN_NORMAL;
+				q = q + Double.MIN_VALUE;
 
 		return q;
 	}
@@ -140,29 +137,23 @@ public class Firm {
 	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1)
 	public void makeOffer() {
 
-		if (Market.firms.perceivedQSegments.contains(this))
-			setNextOffer();
+		double oldQ = offer.getQuality();
 
-		else {
-			// Choose a price to reenter
-			double p;
-			try {
-				p = getOptimalPriceGivenRealQ(offer.getQuality());
-				offer.setPrice(p);
-			} catch (NoPrice e) {
-				// No price to reenter, sets cost as price
-				offer.setPrice(getUnitCost(getQuality()));
-			}
+		offer = ImprovingOffer.get(this);
+		double newQ = offer.getQuality();
+
+		// Need to Reorder fimrsByQ?
+		if (oldQ != newQ) {
+			Market.firms.firmsByQ.remove(oldQ);
+			Market.firms.firmsByQ.put(newQ, this);
 		}
 
 		updateConsumerKnowledge();
 
 	}
 
-	protected void setNextOffer() {
-
-		offer = Offer.checkedAdd(this, getOffer(), ImprovingDeltaOffer.get(this, Market.firms.perceivedQSegments));
-
+	public double getPerceivedQuality() {
+		return getQuality() * getPerceptionDiscount();
 	}
 
 	public double getPerceivedQuality(double q) {
@@ -174,10 +165,30 @@ public class Firm {
 		// real q weighted by consumers already tried the firm
 		// disc q weighted by consumers didn't try the firm
 
-		double notTriedBy = Market.consumers.size() - triedBy;
+		double mktSize = Market.consumers.size();
+		double notTriedBy = mktSize - triedBy;
 
 		double avgDiscountFactor = (Double) GetParameter("qualityDiscountMean");
-		return (triedBy + avgDiscountFactor * notTriedBy) / (triedBy + notTriedBy);
+		return (triedBy + avgDiscountFactor * notTriedBy) / mktSize;
+	}
+
+	public Offer getPerceivedOffer() {
+
+		Offer retval = new Offer(offer);
+		retval.setQuality(getPerceivedQuality());
+
+		return retval;
+
+	}
+
+	// To be used when f could be null
+	public static Offer getPerceivedOffer(Firm f) {
+
+		if (f == null)
+			return null;
+		else
+			return f.getPerceivedOffer();
+
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.NEXT_STEP_FIRM_PRIORITY, interval = 1)
@@ -320,15 +331,6 @@ public class Firm {
 		Market.firms.addToFirmLists(this);
 	}
 
-	public double getExpectedMargin() {
-		return Market.firms.perceivedQSegments.getExpectedDemand(this)
-				* (offer.getPrice() - getUnitCost(offer.getQuality()));
-	}
-
-	public double getExpectedProfit() {
-		return getExpectedMargin() - fixedCost;
-	}
-
 	/*
 	 * Getters to probe
 	 */
@@ -343,6 +345,10 @@ public class Firm {
 
 	public double getProfit() {
 		return profit;
+	}
+
+	public double getSales() {
+		return getDemand() * getPrice();
 	}
 
 	public double getPrice() {

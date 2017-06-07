@@ -1,4 +1,4 @@
-package decisionTools;
+package optimalPrice;
 
 public class NoPrice extends Exception {
 

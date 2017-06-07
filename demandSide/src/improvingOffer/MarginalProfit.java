@@ -1,4 +1,4 @@
-package decisionTools;
+package improvingOffer;
 
 import org.apache.commons.math3.util.FastMath;
 

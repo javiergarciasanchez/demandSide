@@ -45,5 +45,9 @@ public class DeltaOffer {
 			return DeltaOfferSignCompare.BOTH_EQUAL;
 
 	}
+	
+	public String toString(){
+		return "DP: " + deltaPrice + "; DQ: " + deltaQuality; 
+	}
 
 }

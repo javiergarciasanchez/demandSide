@@ -1,10 +1,10 @@
 package offer;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
-
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumers;
+import demandSide.Market;
 import firms.Firm;
 
 public class Offer {
@@ -16,9 +16,9 @@ public class Offer {
 	}
 
 	public Offer(double p, double q) {
-		if (p<0 || q <0)
+		if (p < 0 || q < 0)
 			throw new Error("Price and quality should be higher than zero");
-		
+
 		setQuality(q);
 		setPrice(p);
 	}
@@ -27,31 +27,53 @@ public class Offer {
 		setQuality(offer.getQuality());
 		setPrice(offer.getPrice());
 	}
-	
-	public static Offer checkedAdd(Firm f, Offer of, DeltaOffer deltaOffer){
+
+	public static Offer checkedAdd(Firm f, Offer realOffer, DeltaOffer deltaOffer) {
+
+		// Quality should be higher than zero and different from other firms'
+		// quality
+		double q = realOffer.getQuality() + deltaOffer.getDeltaQuality();
+		q = FastMath.max(q, getMinQuality());
 		
-		// Quality should be higher than minQuality
-		double q = of.getQuality() + deltaOffer.getDeltaQuality();
-		q = FastMath.max(q, 0. + Double.MIN_NORMAL);
+		while (Market.firms.firmsByQ.containsKey(q))
+			q = q + Double.MIN_VALUE;
 
 		// Price should be higher than minPrice
-		double p = of.getPrice() + deltaOffer.getDeltaPrice();		
-		p = FastMath.max(p, f.getUnitCost(q) + Double.MIN_NORMAL);
-		
+		double p = realOffer.getPrice() + deltaOffer.getDeltaPrice();
+		p = FastMath.max(p, getMinPrice(f, q));
+
 		return new Offer(p, q);
-		
+
 	}
 
-	public static boolean equal(Offer of1, Offer of2) {
-		if ((of1 == null) && (of2 == null))
+	public static double getMinQuality() {
+		return 0. + Double.MIN_VALUE;
+	}
+
+	public static double getMinPrice(Firm f, double quality) {
+		return getMinPrice( f.getUnitCost(quality), quality);
+	}
+	
+	public static double getMinPrice(double cost, double quality) {
+
+		// and should have the possibility of having a consumer (margUtil > p/q)
+		// Thus p/q > minMargUtilTheta
+		double minMargUtil = Consumers.getMinMargUtilOfQuality();
+
+		return FastMath.max(cost, minMargUtil * quality) + Double.MIN_VALUE;
+
+	}
+
+	public static boolean equal(Offer loOffer, Offer hiOffer) {
+
+		if ((loOffer == null) && (hiOffer == null))
 			return true;
-		else if ((of1 == null) || (of2 == null))
+		else if ((loOffer == null) || (hiOffer == null))
 			return false;
 		else
 			// of1 and of2 both not null
-			return ((of1.price == of2.price) && (of1.quality == of2.quality));
+			return ((loOffer.price == hiOffer.price) && (loOffer.quality == hiOffer.quality));
 	}
-
 
 	/*
 	 * Calculates the marginal utility of quality that divides consumer
@@ -59,24 +81,24 @@ public class Offer {
 	 * "limit" will choose loOffer, while the ones with higher (muq) would
 	 * choose hiOffer
 	 */
-	public static double limit(Offer loOffer, Offer hiOffer) {
+	public static double limit(Offer loOf, Offer hiOf) {
 
-		if (equal(loOffer, hiOffer))
+		if (equal(loOf, hiOf))
 			throw new Error("Offers should be different");
 
-		if (loOffer == null)
-			return Consumers.getMinMargUtilOfQuality();
+		if (loOf == null)
+			return FastMath.max(hiOf.price / hiOf.quality, Consumers.getMinMargUtilOfQuality());
 
-		if (hiOffer == null)
+		if (hiOf == null)
 			return Double.POSITIVE_INFINITY;
 
 		double loQ, hiQ;
-		loQ = loOffer.getQuality();
-		hiQ = hiOffer.getQuality();
+		loQ = loOf.getQuality();
+		hiQ = hiOf.getQuality();
 
 		double loP, hiP;
-		loP = loOffer.getPrice();
-		hiP = hiOffer.getPrice();
+		loP = loOf.getPrice();
+		hiP = hiOf.getPrice();
 
 		if (loQ > hiQ)
 			throw new Error("higher offer quality should be >= than low offer quality");

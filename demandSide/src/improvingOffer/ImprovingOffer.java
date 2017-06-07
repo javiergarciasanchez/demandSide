@@ -1,31 +1,43 @@
-package decisionTools;
+package improvingOffer;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import org.apache.commons.math3.util.FastMath;
 
 import firms.Firm;
-import firms.FirmsSegments;
+import firms.FirmsPerceivedQSegments;
 import offer.DeltaOffer;
 import offer.DeltaOfferSignCompare;
 import offer.Offer;
+import optimalPrice.NoPrice;
+import optimalPrice.OptimalPrice;
 
-public class ImprovingDeltaOffer {
+public class ImprovingOffer {
 
-	/*
-	 * Creates a vector that improves profit, using MarginalProfit
-	 */
-	public static DeltaOffer get(Firm f, FirmsSegments seg) {
+	public static Offer get(Firm f) {
+
+		FirmsPerceivedQSegments seg = new FirmsPerceivedQSegments();
+
+		if (seg.contains(f))
+			return getImprovingOffer(f, seg);
+		else {
+			return getReEntryOffer(f, seg);
+		}
+
+	}
+
+	private static Offer getImprovingOffer(Firm f, FirmsPerceivedQSegments seg) {
+
 		DeltaOffer deltaOffer = new DeltaOffer(0., 0.);
 
-		Offer currOffer = f.getOffer();
-		deltaOffer = getImprovingDeltaOffer(f, seg, currOffer);
+		Offer currRealOffer = f.getOffer();
+		deltaOffer = getImprovingDeltaOffer(f, seg, currRealOffer);
 
 		/*
 		 * Check if after tentative steps any derivative changes sign If sign
 		 * changes reduces step to one half
 		 */
-		DeltaOffer nextDeltaOffer = getImprovingDeltaOffer(f, seg,  Offer.checkedAdd(f, currOffer, deltaOffer));
+		DeltaOffer nextDeltaOffer = getImprovingDeltaOffer(f, seg, Offer.checkedAdd(f, currRealOffer, deltaOffer));
 		DeltaOfferSignCompare comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
 
 		while (comp != DeltaOfferSignCompare.BOTH_EQUAL) {
@@ -45,18 +57,39 @@ public class ImprovingDeltaOffer {
 				break;
 			}
 
-			nextDeltaOffer = getImprovingDeltaOffer(f, seg,  Offer.checkedAdd(f, currOffer, deltaOffer));
+			nextDeltaOffer = getImprovingDeltaOffer(f, seg, Offer.checkedAdd(f, currRealOffer, deltaOffer));
 			comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
 
 		}
 
-		return deltaOffer;
+		return Offer.checkedAdd(f, currRealOffer, deltaOffer);
 
 	}
 
-	private static DeltaOffer getImprovingDeltaOffer(Firm f, FirmsSegments seg, Offer offer) {
+	private static Offer getReEntryOffer(Firm f, FirmsPerceivedQSegments seg) {
 
-		MarginalProfit mgProf = getMarginalProfit(f, offer, seg);
+		double perceivedQ = f.getPerceivedQuality();
+		double realQ = f.getQuality();
+		double cost = f.getUnitCost(realQ);
+
+		// Choose a price to reenter
+		double p;
+		try {
+			p = OptimalPrice.get(perceivedQ, cost, seg);
+
+		} catch (NoPrice e) {
+
+			// No price to reenter, keeps previous price
+			p = f.getPrice();
+		}
+
+		return new Offer(p, perceivedQ);
+
+	}
+
+	private static DeltaOffer getImprovingDeltaOffer(Firm f, FirmsPerceivedQSegments seg, Offer realOffer) {
+
+		MarginalProfit mgProf = getMarginalProfit(f, realOffer, seg);
 
 		double signQ = FastMath.signum(mgProf.respectToQuality);
 
@@ -72,7 +105,7 @@ public class ImprovingDeltaOffer {
 
 	}
 
-	private static MarginalProfit getMarginalProfit(Firm f, Offer realOffer, FirmsSegments seg) {
+	private static MarginalProfit getMarginalProfit(Firm f, Offer realOffer, FirmsPerceivedQSegments seg) {
 
 		// Cost and marginal cost depend always on real quality
 		double realQ = realOffer.getQuality();
@@ -80,14 +113,14 @@ public class ImprovingDeltaOffer {
 		double marginalCost = f.getMarginalCostOfQuality(realQ);
 
 		// Marginal profit and segment neighbors depend on segment quality
-		double segQ = seg.getQuality(f, realQ);
-		Offer segOffer = new Offer(realOffer.getPrice(), segQ);
-		Offer loLimitOffer = seg.getOffer(seg.getLowerFirmGivenQ(segQ));
-		Offer hiLimitOffer = seg.getOffer(seg.getHigherFirmGivenQ(segQ));
+		double perceivedQ = f.getPerceivedQuality(realQ);
+		Offer segOffer = new Offer(realOffer.getPrice(), perceivedQ);
+		Offer loLimitOffer = Firm.getPerceivedOffer(seg.getLowerFirmGivenQ(perceivedQ));
+		Offer hiLimitOffer = Firm.getPerceivedOffer(seg.getHigherFirmGivenQ(perceivedQ));
 
 		MarginalProfit mgProf = new MarginalProfit(segOffer, cost, marginalCost, loLimitOffer, hiLimitOffer);
 
 		return mgProf;
 	}
-	
+
 }

@@ -24,7 +24,6 @@ public class Firms extends DefaultContext<Firm> {
 
 	// Theoretical market based on perceived quality and price
 	public TreeMap<Double, Firm> firmsByQ;
-	FirmsSegments perceivedQSegments;
 
 	public Firms() {
 		super("Firms_Context");
@@ -55,24 +54,21 @@ public class Firms extends DefaultContext<Firm> {
 
 	public void createFirmLists() {
 
-		firmsByQ = new TreeMap<Double, Firm>();
-		perceivedQSegments = new FirmsPerceivedQSegments();
+		firmsByQ = new TreeMap<Double, Firm>();		
 
 	}
 
 	public void addToFirmLists(Firm f) {
 
 		firmsByQ.put(f.getQuality(), f);
-		perceivedQSegments.add(f);
 
 	}
 
 	public void removeFromFirmLists(Firm f) {
 
-		perceivedQSegments.remove(f);
 		firmsByQ.remove(f);
 
-	}
+	}	
 
 	public Gamma getFixedCostDistrib() {
 		return fixedCostDistrib;
@@ -108,7 +104,7 @@ public class Firms extends DefaultContext<Firm> {
 	}
 
 	public static void get(Collection<Firm> firmsColl) {
-		System.out.println("f p q pq");
+		System.out.println("firm price quality perceivedQ");
 
 		firmsColl.stream().forEach(f -> System.out.println("f" + f.getFirmNumID() + " " + f.getPrice() + " "
 				+ f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));

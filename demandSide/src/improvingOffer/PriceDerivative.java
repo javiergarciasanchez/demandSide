@@ -1,21 +1,21 @@
-package decisionTools;
+package improvingOffer;
 
 import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 import org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableFunction;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
-import firms.FirmsSegments;
+import firms.FirmsPerceivedQSegments;
 import offer.Offer;
 
 public class PriceDerivative implements UnivariateDifferentiableFunction {
 
-	FirmsSegments seg;
+	FirmsPerceivedQSegments seg;
 	double q;
 	Offer loLimitOffer, hiLimitOffer;
 	double cost;
 	double loLimit, hiLimit;
 
-	public PriceDerivative(FirmsSegments seg, double q, double cost, Offer loLimitOffer, Offer hiLimitOffer,
+	public PriceDerivative(FirmsPerceivedQSegments seg, double q, double cost, Offer loLimitOffer, Offer hiLimitOffer,
 			double loLimit, double hiLimit) {
 		this.seg = seg;
 		this.q = q;

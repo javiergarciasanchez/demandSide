@@ -1,6 +1,6 @@
 package firms;
 
-import decisionTools.ImprovingDeltaOffer;
+import improvingOffer.ImprovingOffer;
 
 public class StrategicPreference {
 
@@ -13,7 +13,7 @@ public class StrategicPreference {
 		return (lo+hi)/2.0;
 	}
 	
-	public ImprovingDeltaOffer adjustImprovingDeltaOffer(ImprovingDeltaOffer dOffer){
+	public ImprovingOffer adjustImprovingDeltaOffer(ImprovingOffer dOffer){
 		return dOffer;
 	}
 

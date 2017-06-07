@@ -73,7 +73,7 @@
 		type="java.lang.String" defaultValue="3" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter" />
 	<parameter name="stopAt" displayName="Stop at" type="double"
-		defaultValue="500.0" isReadOnly="false"
+		defaultValue="100.0" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 
 	

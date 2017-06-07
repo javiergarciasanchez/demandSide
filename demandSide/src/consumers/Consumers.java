@@ -71,6 +71,8 @@ public class Consumers extends DefaultContext<Consumer> {
 
 		if (margUtil <= minMargUtilOfQuality)
 			return mktSize;
+		else if (margUtil == Double.POSITIVE_INFINITY)
+			return 0;
 		else
 			return mktSize * FastMath.pow(minMargUtilOfQuality / margUtil, lambda);
 
@@ -102,22 +104,17 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static double expectedQuantity(Offer segOffer, Offer segLowOffer, Offer segHighOffer) {
 
-		if (segOffer == null)
-			throw new Error("Can not calculate demand of null Offer");
+		assert segOffer != null;
 
 		double demandAboveLoLimit, demandAboveHiLimit;
 
-		if (segLowOffer == null)
-			demandAboveLoLimit = Consumers.getMarketSize();
-		else
-			demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(segLowOffer, segOffer));
+		demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(segLowOffer, segOffer));
+		demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(segOffer, segHighOffer));
 
-		if (segHighOffer == null)
-			demandAboveHiLimit = 0.0;
+		if (demandAboveLoLimit > demandAboveHiLimit)
+			return demandAboveLoLimit - demandAboveHiLimit;
 		else
-			demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(segOffer, segHighOffer));
-
-		return demandAboveLoLimit - demandAboveHiLimit;
+			return 0;
 
 	}
 
