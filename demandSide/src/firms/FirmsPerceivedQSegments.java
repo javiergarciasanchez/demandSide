@@ -1,46 +1,146 @@
 package firms;
 
 import java.util.Comparator;
+import java.util.TreeSet;
+import demandSide.Market;
+import offer.Offer;
+import consumers.Consumers;
 
-public class FirmsPerceivedQSegments extends FirmsSegments {
+public abstract class FirmsSegments extends TreeSet<Firm> {
 
 	private static final long serialVersionUID = 1L;
 
-	private static class CompareBy implements Comparator<Firm> {
+	public FirmsSegments(Comparator<Firm> compBy) {
+		super(compBy);
+	}
 
-		@Override
-		public int compare(Firm f1, Firm f2) {
+	@Override
+	public boolean add(Firm f) {
+		if (checkEntry(f)) {
+			// Take out from the market expelled firms
+			takeOutExpelledFirms(f);
+			return super.add(f);
+		} else
+			return false;
+	}
 
-			if (f1.equals(f2))
-				return 0;
+	@Override
+	public boolean remove(Object f) {
 
-			double q1 = f1.getQuality();
-			double q2 = f2.getQuality();
+		boolean retval = super.remove(f);
 
-			double pQ1 = f1.getPerceivedQuality(q1);
-			double pQ2 = f2.getPerceivedQuality(q2);
+		// after remove check if any of the firms that are out of the market may
+		// enter
+		Market.firms.stream().filter(e -> (!contains(e) && checkEntry(e))).forEach(e -> super.add(e));
 
-			if (pQ1 == pQ2)
-				// perceived qualities are equal, using real quality to tie break
-				return (q1 < q2) ? -1 : 1;
-			else
-				return (pQ1 < pQ2) ? -1 : 1;
+		return retval;
+	}
+
+	public Offer getOffer(Firm f) {
+		if (f == null)
+			return null;
+
+		Offer retval = new Offer(f.getOffer());
+		retval.setQuality(getQuality(f));
+
+		return retval;
+
+	}
+
+	// Quality according to segments ordering
+	public abstract double getQuality(Firm f);
+
+	public abstract double getQuality(Firm f, double realQ);
+
+	private boolean checkEntry(Firm f) {
+		if (f == null)
+			throw new Error("Cannot check entry of null firm");
+
+		Firm lo = lower(f);
+		Firm hi = higher(f);
+
+		// limit takes into account the possibility of offers being null
+		return Offer.limit(getOffer(lo), getOffer(f)) < Offer.limit(getOffer(f), getOffer(hi));
+
+	}
+
+	private void takeOutExpelledFirms(Firm f) {
+
+		Firm loF, hiF;
+		double q = getQuality(f);
+		double p = f.getPrice();
+
+		loF = lower(f);
+		while (loF != null) {
+			if (p < getPriceToExpel(q, loF)) {
+				remove(loF);
+				loF = lower(loF);
+			} else
+				break;
+		}
+
+		hiF = higher(f);
+		while (hiF != null) {
+			if (p > getPriceToExpel(q, hiF)) {
+				remove(hiF);
+				hiF = higher(hiF);
+			} else
+				break;
 		}
 
 	}
 
-	public FirmsPerceivedQSegments() {
-		super(new CompareBy());
+	private double getLoLimit(Firm f) {
+		if (f == null)
+			throw new Error("Firm value cannot be null");
+
+		return Offer.limit(getOffer(lower(f)), getOffer(f));
+
 	}
 
-	@Override
-	public double getQuality(Firm f) {
-		return f.getPerceivedQuality(f.getQuality());
+	private double getHiLimit(Firm f) {
+		if (f == null)
+			throw new Error("Firm value cannot be null");
+
+		return Offer.limit(getOffer(f), getOffer(higher(f)));
+
 	}
 
-	@Override
-	public double getQuality(Firm f, double realQ) {
-		return f.getPerceivedQuality(realQ);
+	public Firm getLowerFirmGivenQ(double q) {
+
+		return stream().filter(f -> getQuality(f) < q).max(comparator()).orElse(null);
+
+	}
+
+	public Firm getHigherFirmGivenQ(double q) {
+
+		return stream().filter(f -> getQuality(f) > q).findFirst().orElse(null);
+
+	}
+
+	public double getExpectedDemand(Firm f) {
+
+		if (!contains(f))
+			return 0;
+		else
+			return Consumers.expectedQuantity(getOffer(f), getOffer(lower(f)), getOffer(higher(f)));
+
+	}
+
+	// Note that it could return negative infinity
+	public double getPriceToExpel(double q, Firm f) {
+		if (f == null)
+			throw new Error("Cannot get a price to expel null firm");
+		
+
+		double qF = getQuality(f);
+		
+		if (q == qF)
+			return f.getPrice() - Double.MIN_NORMAL;
+		else if (qF < q)
+			return f.getPrice() + getLoLimit(f) * (q - qF);
+		else
+			return f.getPrice() - getHiLimit(f) * (qF - q);
 	}
 
 }
