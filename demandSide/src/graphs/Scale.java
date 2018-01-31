@@ -1,7 +1,8 @@
 package graphs;
 
+import static repast.simphony.essentials.RepastEssentials.GetParameter;
+
 import firms.Firm;
-import offer.Offer;
 
 public class Scale {
 
@@ -16,15 +17,15 @@ public class Scale {
 		maxP = 0.0;
 
 		minQ = 0.0;
-		maxQ = Offer.getMaxInitialQuality();
+		maxQ = (double) GetParameter("maxInitialQuality");
 	}
 
 	public static void update(Firm f) {
-		double p = f.getPrice();		
+		double p = f.getPrice().doubleValue();		
 		minP = (p < minP) ? p : minP;
 		maxP = (p > maxP) ? p : maxP;
 
-		double q = f.getQuality();
+		double q = f.getQuality().doubleValue();
 		minQ = (q < minQ) ? q : minQ;
 		maxQ = (q > maxQ) ? q : maxQ;
 

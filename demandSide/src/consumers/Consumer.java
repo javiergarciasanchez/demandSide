@@ -81,11 +81,6 @@ public class Consumer {
 		knownFirmsQualityFactor.put(f, getQualityDiscount());
 	}
 
-	public void addToTriedFirms(Firm f) {
-		// Sets quality factor to 1
-		knownFirmsQualityFactor.put(f, 1.0);
-	}
-
 	@ScheduledMethod(start = 1, priority = RunPriority.CHOOSE_FIRM_PRIORITY, interval = 1)
 	public void chooseFirm() {
 
@@ -96,15 +91,26 @@ public class Consumer {
 			chosenFirm.setDemand(chosenFirm.getDemand() + 1);
 
 			// Check if first time chosen
-			if (knownFirmsQualityFactor.get(chosenFirm) != 1.0) {
+			if (firstTimeChosen(chosenFirm)) {
 				chosenFirm.addNewConsumer();
-				knownFirmsQualityFactor.put(chosenFirm, 1.0);
+				addToTriedFirms(chosenFirm);
+
 			}
 		}
 
 	}
 
-//	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
+	private void addToTriedFirms(Firm f) {
+		// Sets quality factor to 1
+		knownFirmsQualityFactor.put(f, 1.0);
+	}
+
+	private boolean firstTimeChosen(Firm f) {
+		return (knownFirmsQualityFactor.get(f) != 1.0);
+	}
+
+	// @ScheduledMethod(start = 1, priority =
+	// RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
 	public void updateProjections() {
 		Market.consumersProjection.update(this);
 		Market.margUtilProjection.update(this);
@@ -115,14 +121,16 @@ public class Consumer {
 	// if no firm is chosen returns null (all utilities are below 0)
 	private Firm chooseMaximizingFirm() {
 
-		double utility = 0;
+		double maxUtility = 0;
 		Firm maxUtilFirm = null;
 
 		for (Entry<Firm, Double> knownFirm : knownFirmsQualityFactor.entrySet()) {
 
-			if (utility(knownFirm) > utility) {
+			double tmpUtil = expectedUtility(knownFirm);
+
+			if (tmpUtil > maxUtility) {
 				maxUtilFirm = knownFirm.getKey();
-				utility = utility(knownFirm);
+				maxUtility = tmpUtil;
 			}
 		}
 
@@ -131,29 +139,37 @@ public class Consumer {
 
 	}
 
-	private double utility(Entry<Firm, Double> knownFirm) {
+	private double expectedUtility(Entry<Firm, Double> knownFirm) {
 		Offer o = knownFirm.getKey().getOffer();
 		double qualityFactor = knownFirm.getValue();
 
-		return margUtilOfQuality * o.getQuality() * qualityFactor - o.getPrice();
+		return getMargUtilOfQuality() * o.getQuality().doubleValue() * qualityFactor - o.getPrice().doubleValue();
 	}
 
+	private double utility(Entry<Firm, Double> knownFirm) {
+		Offer o = knownFirm.getKey().getOffer();
+
+		return getMargUtilOfQuality() * o.getQuality().doubleValue() - o.getPrice().doubleValue();
+	}
+	
 	public void removeTraceOfFirm(Firm firm) {
 		knownFirmsQualityFactor.remove(firm);
 
-		if ((chosenFirm != null) && (chosenFirm.getFirmIntID() == firm.getFirmIntID()))
+		if (chosenFirm.equals(firm))
 			chosenFirm = null;
-	}
 
-	// Procedures for inspecting values
-
-	public Firm getChosenFirm() {
-		return chosenFirm;
 	}
 
 	public double getMargUtilOfQuality() {
 		double recessionImpact = 1 - RecessionsHandler.getRecesMagnitude();
 		return margUtilOfQuality * recessionImpact;
+	}
+
+	//
+	// Procedures for inspecting values
+	//
+	public Firm getChosenFirm() {
+		return chosenFirm;
 	}
 
 	public String getChosenFirmID() {
@@ -169,12 +185,19 @@ public class Consumer {
 		else
 			return chosenFirm.getFirmIntID();
 	}
-
-	public double getUtility() {
+	
+	public double getUtility(){
 		if (chosenFirm == null)
 			return 0.0;
 		else
-			return utility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm, knownFirmsQualityFactor.get(chosenFirm)));
+			return utility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm, knownFirmsQualityFactor.get(chosenFirm)));		
+	}
+
+	public double getExpectedUtility() {
+		if (chosenFirm == null)
+			return 0.0;
+		else
+			return expectedUtility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm, knownFirmsQualityFactor.get(chosenFirm)));
 
 	}
 

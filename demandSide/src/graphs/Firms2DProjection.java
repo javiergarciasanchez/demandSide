@@ -1,5 +1,7 @@
 package graphs;
 
+import java.math.BigDecimal;
+
 import firms.Firm;
 import firms.Firms;
 import repast.simphony.context.space.continuous.ContextSpace;
@@ -31,13 +33,13 @@ public class Firms2DProjection {
 		space.moveTo(firm, priceToCoord(firm.getPrice()), qualityToCoord(firm.getQuality()));
 	}
 
-	private double priceToCoord(double price) {
-		return (price - Scale.getMinPrice()) / (Scale.getMaxPrice() - Scale.getMinPrice())
+	private double priceToCoord(BigDecimal price) {
+		return (price.doubleValue() - Scale.getMinPrice()) / (Scale.getMaxPrice() - Scale.getMinPrice())
 				* (MAX_X - MIN_X) + MIN_X;
 	}
 
-	private double qualityToCoord(double quality) {
-		return (quality - Scale.getMinQuality())
+	private double qualityToCoord(BigDecimal quality) {
+		return (quality.doubleValue() - Scale.getMinQuality())
 				/ (Scale.getMaxQuality() - Scale.getMinQuality()) * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 

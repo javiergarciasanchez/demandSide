@@ -2,123 +2,112 @@ package improvingOffer;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
+import java.math.BigDecimal;
 import org.apache.commons.math3.util.FastMath;
 
+import firms.ExpectedMarket;
 import firms.Firm;
-import firms.FirmsPerceivedQSegments;
 import offer.DeltaOffer;
-import offer.DeltaOfferSignCompare;
 import offer.Offer;
 import optimalPrice.NoPrice;
 import optimalPrice.OptimalPrice;
 
 public class ImprovingOffer {
 
-	public static Offer get(Firm f) {
+	public static Offer get(Firm f, DeltaOffer deltaOffer) {
+		ExpectedMarket expMkt = new ExpectedMarket(f);
+		MarginalProfit mgProf = getMarginalProfit(f, expMkt);
 
-		FirmsPerceivedQSegments seg = new FirmsPerceivedQSegments();
+		BigDecimal pStep = getPriceStep(mgProf, deltaOffer);
+		BigDecimal qStep = getQualityStep(mgProf, deltaOffer);
 
-		if (seg.contains(f))
-			return getImprovingOffer(f, seg);
-		else {
-			return getReEntryOffer(f, seg);
-		}
+		BigDecimal currP = f.getPrice();
+		BigDecimal currQ = f.getQuality();
+		BigDecimal nextP, nextQ;
 
-	}
+		if (productNeedsModification(mgProf, pStep, qStep)) {
 
-	private static Offer getImprovingOffer(Firm f, FirmsPerceivedQSegments seg) {
+			if (qStep.compareTo(BigDecimal.ZERO) > 0)
+				nextQ = Offer.getUpWardClosestAvailableQuality(currQ.add(qStep));
+			else
+				nextQ = Offer.getDownWardClosestAvailableQuality(currQ.add(qStep));
 
-		DeltaOffer deltaOffer = new DeltaOffer(0., 0.);
+			// Keep previous quality
+			if (nextQ == null)
+				nextQ = currQ;
 
-		Offer currRealOffer = f.getOffer();
-		deltaOffer = getImprovingDeltaOffer(f, seg, currRealOffer);
-
-		/*
-		 * Check if after tentative steps any derivative changes sign If sign
-		 * changes reduces step to one half
-		 */
-		DeltaOffer nextDeltaOffer = getImprovingDeltaOffer(f, seg, Offer.checkedAdd(f, currRealOffer, deltaOffer));
-		DeltaOfferSignCompare comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
-
-		while (comp != DeltaOfferSignCompare.BOTH_EQUAL) {
-
-			switch (comp) {
-			case BOTH_UNEQUAL:
-				deltaOffer.setDeltaPrice(deltaOffer.getDeltaPrice() / 2.);
-				deltaOffer.setDeltaQuality(deltaOffer.getDeltaQuality() / 2.);
-				break;
-			case UNEQUAL_PRICE:
-				deltaOffer.setDeltaPrice(deltaOffer.getDeltaPrice() / 2.);
-				break;
-			case UNEQUAL_QUALITY:
-				deltaOffer.setDeltaQuality(deltaOffer.getDeltaQuality() / 2.);
-				break;
-			case BOTH_EQUAL:
-				break;
+			try {
+				nextP = OptimalPrice.get(f.getPerceivedQuality(nextQ), f.getUnitCost(nextQ), expMkt);
+			} catch (NoPrice e) {
+				// Keep previous price
+				nextP = currP;
 			}
 
-			nextDeltaOffer = getImprovingDeltaOffer(f, seg, Offer.checkedAdd(f, currRealOffer, deltaOffer));
-			comp = DeltaOffer.deltaOfferCompare(deltaOffer, nextDeltaOffer);
-
+		} else {
+			nextP = currP.add(pStep).max(Offer.getMinPrice(f, currQ));
+			nextQ = currQ;
 		}
 
-		return Offer.checkedAdd(f, currRealOffer, deltaOffer);
+		return new Offer(nextP, nextQ);
 
 	}
 
-	private static Offer getReEntryOffer(Firm f, FirmsPerceivedQSegments seg) {
+	private static BigDecimal getQualityStep(MarginalProfit mgProf, DeltaOffer deltaOffer) {
+		BigDecimal retval;
 
-		double perceivedQ = f.getPerceivedQuality();
-		double realQ = f.getQuality();
-		double cost = f.getUnitCost(realQ);
+		BigDecimal signMgProf = BigDecimal.valueOf(FastMath.signum(mgProf.respectToQuality));
 
-		// Choose a price to reenter
-		double p;
-		try {
-			p = OptimalPrice.get(perceivedQ, cost, seg);
-
-		} catch (NoPrice e) {
-
-			// No price to reenter, keeps previous price
-			p = f.getPrice();
+		if (deltaOffer.getDeltaQuality().multiply(signMgProf).compareTo(BigDecimal.ZERO) < 0)
+			retval = deltaOffer.getDeltaQuality().divide(BigDecimal.valueOf(-2), Offer.getQualityScale(),
+					Offer.getQualityRounding());
+		else {
+			retval = signMgProf.multiply(BigDecimal.valueOf((Double) GetParameter("defaultQualityStep")));
+			retval = retval.setScale(Offer.getQualityScale(), Offer.getQualityRounding());
 		}
 
-		return new Offer(p, perceivedQ);
+		return retval;
+	}
+
+	private static BigDecimal getPriceStep(MarginalProfit mgProf, DeltaOffer deltaOffer) {
+		BigDecimal retval;
+
+		BigDecimal signMgProf = BigDecimal.valueOf(FastMath.signum(mgProf.respectToPrice));
+
+		if (deltaOffer.getDeltaPrice().multiply(signMgProf).compareTo(BigDecimal.ZERO) < 0)
+			retval = deltaOffer.getDeltaPrice().divide(BigDecimal.valueOf(-2), Offer.getPriceScale(),
+					Offer.getPriceRounding());
+		else {
+			retval = signMgProf.multiply(BigDecimal.valueOf((Double) GetParameter("defaultPriceStep")));
+			retval = retval.setScale(Offer.getPriceScale(), Offer.getPriceRounding());
+		}
+
+		return retval;
+	}
+
+	private static boolean productNeedsModification(MarginalProfit mgProf, BigDecimal pStep, BigDecimal qStep) {
+
+		double qThreshold = (Double) GetParameter("qualityThreshold");
+		return qThreshold > (mgProf.respectToQuality * qStep.doubleValue())
+				/ (mgProf.respectToPrice * pStep.doubleValue());
 
 	}
 
-	private static DeltaOffer getImprovingDeltaOffer(Firm f, FirmsPerceivedQSegments seg, Offer realOffer) {
+	private static MarginalProfit getMarginalProfit(Firm f, ExpectedMarket expMkt) {
 
-		MarginalProfit mgProf = getMarginalProfit(f, realOffer, seg);
-
-		double signQ = FastMath.signum(mgProf.respectToQuality);
-
-		double qStep = signQ * (Double) GetParameter("defaultQualityStep");
-
-		/*
-		 * Price step is chosen so that expected profit improvement with respect
-		 * to price is equal to the one respect to quality
-		 */
-		double pStep = qStep * mgProf.respectToQuality / mgProf.respectToPrice;
-
-		return new DeltaOffer(pStep, qStep);
-
-	}
-
-	private static MarginalProfit getMarginalProfit(Firm f, Offer realOffer, FirmsPerceivedQSegments seg) {
+		Offer realOffer = f.getOffer();
 
 		// Cost and marginal cost depend always on real quality
-		double realQ = realOffer.getQuality();
+		BigDecimal realQ = realOffer.getQuality();
 		double cost = f.getUnitCost(realQ);
 		double marginalCost = f.getMarginalCostOfQuality(realQ);
 
 		// Marginal profit and segment neighbors depend on segment quality
-		double perceivedQ = f.getPerceivedQuality(realQ);
-		Offer segOffer = new Offer(realOffer.getPrice(), perceivedQ);
-		Offer loLimitOffer = Firm.getPerceivedOffer(seg.getLowerFirmGivenQ(perceivedQ));
-		Offer hiLimitOffer = Firm.getPerceivedOffer(seg.getHigherFirmGivenQ(perceivedQ));
+		BigDecimal perceivedQ = f.getPerceivedQuality(realQ);
+		Offer perceivedOffer = new Offer(realOffer.getPrice(), perceivedQ);
+		Offer loLimitOffer = Firm.getPerceivedOffer(expMkt.getLowerFirmGivenQ(perceivedQ));
+		Offer hiLimitOffer = Firm.getPerceivedOffer(expMkt.getHigherFirmGivenQ(perceivedQ));
 
-		MarginalProfit mgProf = new MarginalProfit(segOffer, cost, marginalCost, loLimitOffer, hiLimitOffer);
+		MarginalProfit mgProf = new MarginalProfit(perceivedOffer, cost, marginalCost, loLimitOffer, hiLimitOffer);
 
 		return mgProf;
 	}

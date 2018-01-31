@@ -1,5 +1,6 @@
 package firms;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.TreeMap;
 import org.apache.commons.math3.util.FastMath;
@@ -23,7 +24,7 @@ public class Firms extends DefaultContext<Firm> {
 	double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
 
 	// Theoretical market based on perceived quality and price
-	public TreeMap<Double, Firm> firmsByQ;
+	public TreeMap<BigDecimal, Firm> firmsByQ;
 
 	public Firms() {
 		super("Firms_Context");
@@ -54,7 +55,7 @@ public class Firms extends DefaultContext<Firm> {
 
 	public void createFirmLists() {
 
-		firmsByQ = new TreeMap<Double, Firm>();		
+		firmsByQ = new TreeMap<BigDecimal, Firm>();		
 
 	}
 
@@ -107,6 +108,13 @@ public class Firms extends DefaultContext<Firm> {
 		System.out.println("firm price quality perceivedQ");
 
 		firmsColl.stream().forEach(f -> System.out.println("f" + f.getFirmNumID() + " " + f.getPrice() + " "
+				+ f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
+	}
+	
+	public static void get(Collection<Firm> firmsColl, Firm omitFirm) {
+		System.out.println("firm price quality perceivedQ");
+
+		firmsColl.stream().filter(f->(!f.equals(omitFirm))).forEach(f -> System.out.println("f" + f.getFirmNumID() + " " + f.getPrice() + " "
 				+ f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
 	}
 

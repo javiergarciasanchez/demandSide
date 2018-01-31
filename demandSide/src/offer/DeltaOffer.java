@@ -1,37 +1,43 @@
 package offer;
 
-import org.apache.commons.math3.util.FastMath;
+import java.math.BigDecimal;
 
 public class DeltaOffer {
-	private double deltaPrice;
-	private double deltaQuality;
+	private BigDecimal deltaPrice;
+	private BigDecimal deltaQuality;
 
-	public DeltaOffer(double p, double q) {
-		setDeltaPrice(p);
-		setDeltaQuality(q);
+	public DeltaOffer(BigDecimal dP, BigDecimal dQ) {
+		setDeltaPrice(dP);
+		setDeltaQuality(dQ);
 	}
 
-	public double getDeltaPrice() {
+	public DeltaOffer() {
+		deltaPrice = BigDecimal.ZERO;
+		deltaQuality = BigDecimal.ZERO;
+		
+	}
+
+	public BigDecimal getDeltaPrice() {
 		return deltaPrice;
 	}
 
-	public double getDeltaQuality() {
+	public BigDecimal getDeltaQuality() {
 		return deltaQuality;
 	}
 
-	public void setDeltaPrice(double price) {
-		this.deltaPrice = price;
+	public void setDeltaPrice(BigDecimal dP) {
+		this.deltaPrice = dP;
 	}
 
-	public void setDeltaQuality(double quality) {
-		this.deltaQuality = quality;
+	public void setDeltaQuality(BigDecimal dQ) {
+		this.deltaQuality = dQ;
 	}
 
 	public static DeltaOfferSignCompare deltaOfferCompare(DeltaOffer dOffer1, DeltaOffer dOffer2) {
 
-		double priceSign = FastMath.signum(dOffer1.getDeltaPrice() * dOffer2.getDeltaPrice());
-		double qualitySign = FastMath.signum(dOffer1.getDeltaQuality() * dOffer2.getDeltaQuality());
-
+		int priceSign = dOffer1.getDeltaPrice().signum() * dOffer2.getDeltaPrice().signum(); 
+		int qualitySign = dOffer1.getDeltaQuality().signum() * dOffer2.getDeltaQuality().signum();
+		
 		if ((priceSign == -1) && (qualitySign == -1))
 			return DeltaOfferSignCompare.BOTH_UNEQUAL;
 

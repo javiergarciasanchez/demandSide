@@ -2,6 +2,8 @@ package graphs;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
+import java.math.BigDecimal;
+
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumer;
@@ -67,15 +69,15 @@ public class ConsumptionProjection {
 		return Pareto.inversePareto(acumProb, minimum, lambda);
 	}
 
-	private double priceToCoord(double price) {
-		return (price - Scale.getMinPrice())
+	private double priceToCoord(BigDecimal price) {
+		return (price.doubleValue() - Scale.getMinPrice())
 				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
 
-	private double qualityToCoord(double quality) {
+	private double qualityToCoord(BigDecimal quality) {
 		return MAX_Z
-				- ((quality - Scale.getMinQuality())
+				- ((quality.doubleValue() - Scale.getMinQuality())
 						/ (Scale.getMaxQuality() - Scale.getMinQuality())
 						* (MAX_Z - MIN_Z) + MIN_Z);
 	}

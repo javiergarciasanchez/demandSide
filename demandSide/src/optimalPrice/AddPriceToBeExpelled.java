@@ -1,16 +1,17 @@
 package optimalPrice;
 
+import java.math.BigDecimal;
 import java.util.function.Function;
 
 import firms.Firm;
-import firms.FirmsPerceivedQSegments;
+import firms.ExpectedMarket;
 
 public class AddPriceToBeExpelled implements Function<Firm, ToBeExpelled> {
-	FirmsPerceivedQSegments seg;
-	double perceivedQ;
+	ExpectedMarket expMkt;
+	BigDecimal perceivedQ;
 
-	AddPriceToBeExpelled(FirmsPerceivedQSegments seg, double perceivedQ) {
-		this.seg = seg;
+	AddPriceToBeExpelled(ExpectedMarket expMkt, BigDecimal perceivedQ) {
+		this.expMkt = expMkt;
 		this.perceivedQ = perceivedQ;
 	}
 
@@ -18,7 +19,7 @@ public class AddPriceToBeExpelled implements Function<Firm, ToBeExpelled> {
 	public ToBeExpelled apply(Firm f) {
 		ToBeExpelled retval = new ToBeExpelled();
 		retval.f = f;
-		retval.priceToBeExpelled = seg.getPriceToExpel(perceivedQ, f);
+		retval.priceToBeExpelled = expMkt.getPriceToExpel(perceivedQ, f);
 		return retval;
 	}
 

@@ -1,61 +1,44 @@
 package optimalPrice;
 
-import org.apache.commons.math3.util.FastMath;
+import java.math.BigDecimal;
 
 import firms.Firm;
-import firms.FirmsPerceivedQSegments;
-import offer.Offer;
+import firms.ExpectedMarket;
 
 public class Neighbors {
 	private Firm loF, hiF;
-	FirmsPerceivedQSegments seg;
-	double perceivedQ, cost;
-	double loLimit, hiLimit;
+	ExpectedMarket expMkt;
+	BigDecimal perceivedQ, minPrice;
+	BigDecimal loPriceLimit, hiPriceLimit;
 
-	public Neighbors(FirmsPerceivedQSegments seg, double perceivedQ, double cost, Firm loF, Firm hiF) {
-		this.seg = seg;
+	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Firm loF, Firm hiF) {
+		this.expMkt = expMkt;
 		this.perceivedQ = perceivedQ;
-		this.cost = cost;
+		this.minPrice = minPrice;
 		this.loF = loF;
 		this.hiF = hiF;
 
-		setLimits(null);
+		setPriceLimits(null);
 
 	}
 
-	private void setLimits(Firm prevF) {
+	private void setPriceLimits(Firm prevF) {
 
-		// Setting loLimit
-		loLimit = Offer.getMinPrice(cost, perceivedQ);
-		
-		if (loF != null)		
-			loLimit = FastMath.max(loLimit, seg.getPriceToExpel(perceivedQ, loF));
+		// Setting loPriceLimit
+		loPriceLimit = minPrice;
 
-		if (hiF != null)
-			loLimit = FastMath.max(loLimit, seg.getPriceToExpel(perceivedQ, hiF));		
+		// Note that if price to Expel is null means that any price would expel loF
+		// thus previous loLimit is kept (loLimit = minPrice or price to expel loF)
+		if ((loF != null) && expMkt.getPriceToExpel(perceivedQ, loF) != null)
+			loPriceLimit = loPriceLimit.max(expMkt.getPriceToExpel(perceivedQ, loF));
 
-		// Setting hiLimit		
-		hiLimit = getHigherPriceToEnter(perceivedQ, loF, hiF);
-		if (prevF != null)
-			hiLimit = FastMath.min(hiLimit, seg.getPriceToExpel(perceivedQ, prevF));
-		
-	}
+		if ((hiF != null) && expMkt.getPriceToExpel(perceivedQ, hiF) != null)
+			loPriceLimit = loPriceLimit.max(expMkt.getPriceToExpel(perceivedQ, hiF));
 
-	private static double getHigherPriceToEnter(double perceivedQ, Firm loF, Firm hiF) {
-
-		if (hiF == null)
-			return Double.POSITIVE_INFINITY;
-
-		double loP = 0, loQ = 0;
-		if (loF != null) {
-			loP = loF.getPrice();
-			loQ = loF.getPerceivedQuality();
-		}
-
-		double maxPrice = (hiF.getPrice() * (perceivedQ - loQ) + loP * (hiF.getPerceivedQuality() - perceivedQ))
-				/ (hiF.getPerceivedQuality() - loQ);
-
-		return maxPrice - Double.MIN_VALUE;
+		// Setting hiLimit
+		hiPriceLimit = ExpectedMarket.getMaxPriceToEnter(perceivedQ, loF, hiF);
+		if ((prevF != null) && expMkt.getPriceToExpel(perceivedQ, prevF) != null)
+			hiPriceLimit = hiPriceLimit.min(expMkt.getPriceToExpel(perceivedQ, prevF));
 
 	}
 
@@ -66,7 +49,7 @@ public class Neighbors {
 	void setLoF(Firm loF) {
 		Firm prevF = this.loF;
 		this.loF = loF;
-		setLimits(prevF);
+		setPriceLimits(prevF);
 	}
 
 	Firm getHiF() {
@@ -76,7 +59,7 @@ public class Neighbors {
 	void setHiF(Firm hiF) {
 		Firm prevF = this.hiF;
 		this.hiF = hiF;
-		setLimits(prevF);
+		setPriceLimits(prevF);
 	}
 
 	public String toString() {

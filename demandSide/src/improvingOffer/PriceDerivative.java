@@ -4,18 +4,18 @@ import org.apache.commons.math3.analysis.differentiation.DerivativeStructure;
 import org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableFunction;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 
-import firms.FirmsPerceivedQSegments;
+import firms.ExpectedMarket;
 import offer.Offer;
 
 public class PriceDerivative implements UnivariateDifferentiableFunction {
 
-	FirmsPerceivedQSegments seg;
+	ExpectedMarket seg;
 	double q;
 	Offer loLimitOffer, hiLimitOffer;
 	double cost;
 	double loLimit, hiLimit;
 
-	public PriceDerivative(FirmsPerceivedQSegments seg, double q, double cost, Offer loLimitOffer, Offer hiLimitOffer,
+	public PriceDerivative(ExpectedMarket seg, double q, double cost, Offer loLimitOffer, Offer hiLimitOffer,
 			double loLimit, double hiLimit) {
 		this.seg = seg;
 		this.q = q;

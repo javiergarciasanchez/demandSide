@@ -12,12 +12,12 @@ public class MarginalProfit {
 
 		double demand = Consumers.expectedQuantity(of, loLimitOffer, hiLimitOffer);
 
-		double p = of.getPrice();
+		double p = of.getPrice().doubleValue();
 
 		respectToPrice = (p - cost) * marginalDemandRespectToPrice(of, loLimitOffer, hiLimitOffer) + demand;
 		respectToQuality = (p - cost) * marginalDemandRespectToQuality(of, loLimitOffer, hiLimitOffer)
-				- margCost * demand;
-
+				- margCost * demand;		
+		
 	}
 
 	public static double respectToPrice(Offer of, double cost, Offer loLimitOffer, Offer hiLimitOffer) {
@@ -25,7 +25,7 @@ public class MarginalProfit {
 		double demand = Consumers.expectedQuantity(of, loLimitOffer, hiLimitOffer);
 		double mgDemand = marginalDemandRespectToPrice(of, loLimitOffer, hiLimitOffer);
 
-		return (of.getPrice() - cost) * mgDemand + demand;
+		return (of.getPrice().doubleValue() - cost) * mgDemand + demand;
 
 	}
 
@@ -34,7 +34,7 @@ public class MarginalProfit {
 		double mgDemand = marginalDemandRespectToPrice(of, loLimitOffer, hiLimitOffer);
 		double mgDemandRespectoToPriceTwice = marginalDemandRespectToPriceTwice(of, loLimitOffer, hiLimitOffer);
 
-		return 2 * mgDemand + (of.getPrice() - cost) * mgDemandRespectoToPriceTwice;
+		return 2 * mgDemand + (of.getPrice().doubleValue() - cost) * mgDemandRespectoToPriceTwice;
 
 	}
 
@@ -44,14 +44,14 @@ public class MarginalProfit {
 		double demand = Consumers.expectedQuantity(of, loLimitOffer, hiLimitOffer);
 		double mgDemand = marginalDemandRespectToQuality(of, loLimitOffer, hiLimitOffer);
 
-		return (of.getPrice() - cost) * mgDemand - margCost * demand;
+		return (of.getPrice().doubleValue() - cost) * mgDemand - margCost * demand;
 
 	}
 
 	private static double marginalDemandRespectToPrice(Offer of, Offer loLimitOffer, Offer hiLimitOffer) {
 
-		double deltaLowPrice = Consumers.deltaPrice(loLimitOffer, of);
-		double deltaLowQuality = Consumers.deltaQuality(loLimitOffer, of);
+		double deltaLowPrice = deltaPrice(loLimitOffer, of);
+		double deltaLowQuality = deltaQuality(loLimitOffer, of);
 
 		double demandLow = Consumers.getExpectedConsumersAbove(deltaLowPrice / deltaLowQuality);
 
@@ -61,8 +61,8 @@ public class MarginalProfit {
 
 		} else {
 
-			double deltaHighPrice = Consumers.deltaPrice(of, hiLimitOffer);
-			double deltaHighQuality = Consumers.deltaQuality(of, hiLimitOffer);
+			double deltaHighPrice = deltaPrice(of, hiLimitOffer);
+			double deltaHighQuality = deltaQuality(of, hiLimitOffer);
 
 			double demandHigh = Consumers.getExpectedConsumersAbove(deltaHighPrice / deltaHighQuality);
 
@@ -74,10 +74,10 @@ public class MarginalProfit {
 
 	private static double marginalDemandRespectToPriceTwice(Offer of, Offer loLimitOffer, Offer hiLimitOffer) {
 
-		double deltaLowPrice = Consumers.deltaPrice(loLimitOffer, of);
+		double deltaLowPrice = deltaPrice(loLimitOffer, of);
 		double deltaLowPriceSqr = FastMath.pow(deltaLowPrice, 2);
-		double deltaLowQuality = Consumers.deltaQuality(loLimitOffer, of);
-				
+		double deltaLowQuality = deltaQuality(loLimitOffer, of);
+
 		double lambda = Consumers.getLambda();
 
 		double demandLow = Consumers.getExpectedConsumersAbove(deltaLowPrice / deltaLowQuality);
@@ -88,10 +88,10 @@ public class MarginalProfit {
 
 		} else {
 
-			double deltaHighPrice = Consumers.deltaPrice(of, hiLimitOffer);
+			double deltaHighPrice = deltaPrice(of, hiLimitOffer);
 			double deltaHighPriceSqr = FastMath.pow(deltaHighPrice, 2);
-			double deltaHighQuality = Consumers.deltaQuality(of, hiLimitOffer);
-			
+			double deltaHighQuality = deltaQuality(of, hiLimitOffer);
+
 			double demandHigh = Consumers.getExpectedConsumersAbove(deltaHighPrice / deltaHighQuality);
 
 			return lambda * (lambda + 1) * (demandLow / deltaLowPriceSqr - demandHigh / deltaHighPriceSqr);
@@ -100,11 +100,10 @@ public class MarginalProfit {
 
 	}
 
-
 	private static double marginalDemandRespectToQuality(Offer of, Offer loLimitOffer, Offer hiLimitOffer) {
 
-		double deltaLowPrice = Consumers.deltaPrice(loLimitOffer, of);
-		double deltaLowQuality = Consumers.deltaQuality(loLimitOffer, of);
+		double deltaLowPrice = deltaPrice(loLimitOffer, of);
+		double deltaLowQuality = deltaQuality(loLimitOffer, of);
 
 		double demandLow = Consumers.getExpectedConsumersAbove(deltaLowPrice / deltaLowQuality);
 
@@ -114,8 +113,8 @@ public class MarginalProfit {
 
 		} else {
 
-			double deltaHighPrice = Consumers.deltaPrice(of, hiLimitOffer);
-			double deltaHighQuality = Consumers.deltaQuality(of, hiLimitOffer);
+			double deltaHighPrice = deltaPrice(of, hiLimitOffer);
+			double deltaHighQuality = deltaQuality(of, hiLimitOffer);
 
 			double hiLimit = deltaHighPrice / deltaHighQuality;
 			double demandHigh = Consumers.getExpectedConsumersAbove(hiLimit);
@@ -126,6 +125,14 @@ public class MarginalProfit {
 
 	}
 
+	private static double deltaPrice(Offer loOf, Offer hiOf) {
+		// low Offer could be null
+		return hiOf.getPrice().doubleValue() - ((loOf == null) ? 0. : loOf.getPrice().doubleValue());
+	}
 
+	private static double deltaQuality(Offer loOf, Offer hiOf) {
+		// low Offer could be null
+		return hiOf.getQuality().doubleValue() - ((loOf == null) ? 0. : loOf.getQuality().doubleValue());
+	}
 
 }

@@ -2,6 +2,9 @@ package consumers;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import org.apache.commons.math3.util.FastMath;
 
 import cern.jet.random.Beta;
@@ -67,14 +70,14 @@ public class Consumers extends DefaultContext<Consumer> {
 		return qualityDiscountDistrib;
 	}
 
-	public static double getExpectedConsumersAbove(double margUtil) {
+	public static double getExpectedConsumersAbove(Double margUtilQuality) {
 
-		if (margUtil <= minMargUtilOfQuality)
+		if (margUtilQuality <= minMargUtilOfQuality)
 			return mktSize;
-		else if (margUtil == Double.POSITIVE_INFINITY)
+		else if (margUtilQuality == Double.POSITIVE_INFINITY)
 			return 0;
 		else
-			return mktSize * FastMath.pow(minMargUtilOfQuality / margUtil, lambda);
+			return mktSize * FastMath.pow(minMargUtilOfQuality / margUtilQuality, lambda);
 
 	}
 
@@ -118,22 +121,67 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
+	public static double expectedQuantity(Double p, Double q, Offer segLowOffer, Offer segHighOffer) {
+
+		assert ((p != null) && (q != null));
+
+		Double loP, loQ, hiP, hiQ;
+		double loLimit, hiLimit;
+		double demandAboveLoLimit, demandAboveHiLimit;
+
+		if (segLowOffer != null) {
+			loP = segLowOffer.getPrice().doubleValue();
+			loQ = segLowOffer.getQuality().doubleValue();
+		} else {
+			loP = null;
+			loQ = null;
+		}
+		loLimit = Offer.limit(loP, loQ, p, q);
+		demandAboveLoLimit = getExpectedConsumersAbove(loLimit);
+
+		if (segHighOffer != null) {
+			hiP = segHighOffer.getPrice().doubleValue();
+			hiQ = segHighOffer.getQuality().doubleValue();
+		} else {
+			hiP = null;
+			hiQ = null;
+		}
+		hiLimit = Offer.limit(p, q, hiP, hiQ);
+		demandAboveHiLimit = getExpectedConsumersAbove(hiLimit);
+
+		if (demandAboveLoLimit > demandAboveHiLimit)
+			return demandAboveLoLimit - demandAboveHiLimit;
+		else
+			return 0;
+
+	}
+
+	public static double getMinMargUtilOfQualityAceptingOffer(Offer of) {
+		if (of == null)
+			throw new Error("Offer should not be null");
+		else {
+			double pDivQ = of.getPrice().doubleValue() / of.getQuality().doubleValue();
+			return FastMath.max(pDivQ, getMinMargUtilOfQuality());
+		}
+	}
+
+	public static BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
+		/*
+		 * It is assumed poorest consumer has margUtil = minMargUtil As margUtil
+		 * > p/q p < minMargUtil * q
+		 */
+		BigDecimal minMargUtil = BigDecimal.valueOf(getMinMargUtilOfQuality());
+
+		return quality.multiply(minMargUtil).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
+
+	}
+
 	public static double getLambda() {
 		return lambda;
 	}
 
 	public static void setLambda(double lambda) {
 		Consumers.lambda = lambda;
-	}
-
-	public static double deltaPrice(Offer loOf, Offer hiOf) {
-		// low Offer could be null
-		return hiOf.getPrice() - ((loOf == null) ? 0. : loOf.getPrice());
-	}
-
-	public static double deltaQuality(Offer loOf, Offer hiOf) {
-		// low Offer could be null
-		return hiOf.getQuality() - ((loOf == null) ? 0. : loOf.getQuality());
 	}
 
 }

@@ -1,10 +1,12 @@
 package optimalPrice;
 
+import java.math.BigDecimal;
+
 class OptimalPriceResult {
-	double price = 0.;
+	BigDecimal price = BigDecimal.ZERO;
 	double margin = 0.;
 	
-	public OptimalPriceResult(double price, double margin){
+	public OptimalPriceResult(BigDecimal price, double margin){
 		this.price = price;
 		this.margin = margin;
 		

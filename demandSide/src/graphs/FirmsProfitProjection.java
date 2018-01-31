@@ -1,5 +1,7 @@
 package graphs;
 
+import java.math.BigDecimal;
+
 import org.apache.commons.math3.util.FastMath;
 
 import firms.Firm;
@@ -38,8 +40,8 @@ public class FirmsProfitProjection {
 				qualityToCoord(firm.getQuality()));
 	}
 
-	private double priceToCoord(double price) {
-		return (price - Scale.getMinPrice())
+	private double priceToCoord(BigDecimal price) {
+		return (price.doubleValue() - Scale.getMinPrice())
 				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
@@ -51,9 +53,9 @@ public class FirmsProfitProjection {
 				 * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
-	private double qualityToCoord(double quality) {
+	private double qualityToCoord(BigDecimal quality) {
 		return MAX_Z
-				- ((quality - Scale.getMinQuality())
+				- ((quality.doubleValue() - Scale.getMinQuality())
 						/ (Scale.getMaxQuality() - Scale.getMinQuality())
 						* (MAX_Z - MIN_Z) + MIN_Z);
 	}

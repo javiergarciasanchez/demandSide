@@ -2,6 +2,7 @@ package firms;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.util.FastMath;
@@ -12,6 +13,7 @@ import demandSide.Market;
 import demandSide.RunPriority;
 import graphs.Scale;
 import improvingOffer.ImprovingOffer;
+import offer.DeltaOffer;
 import offer.Offer;
 import optimalPrice.NoPrice;
 import optimalPrice.OptimalPrice;
@@ -21,8 +23,10 @@ import repast.simphony.random.RandomHelper;
 
 public class Firm {
 
-	public StrategicPreference stratPref;
+	private StrategicPreference stratPref;
+
 	private Offer offer;
+	private DeltaOffer deltaOffer;
 
 	private int demand = 0;
 	private double profit = 0.0;
@@ -56,7 +60,9 @@ public class Firm {
 
 		offer = new Offer();
 
-		stratPref = new StrategicPreference(this);
+		deltaOffer = new DeltaOffer();
+
+		setStratPref(new StrategicPreference(this));
 
 		notYetKnownBy = new ArrayList<Consumer>();
 
@@ -70,18 +76,19 @@ public class Firm {
 	}
 
 	private boolean makeInitialOffer() {
+		BigDecimal q, p;
 
-		// getRandomInitialQuality takes care that q should be different for
-		// different firms.
-		double q = getRandomInitialQuality();
-		double p;
+		q = Offer.getRandomQuality(getStratPref());
+
+		if (q == null)
+			// There is no available quality
+			return false;
 
 		try {
 			p = getOptimalPriceGivenRealQ(q);
 		} catch (NoPrice e) {
 			return false;
 		}
-		
 
 		offer.setPrice(p);
 		offer.setQuality(q);
@@ -107,26 +114,13 @@ public class Firm {
 	 * lower the price the more competitors are expelled The lowest meaningful
 	 * price is marginal cost
 	 */
-	private double getOptimalPriceGivenRealQ(double realQ) throws NoPrice {
+	private BigDecimal getOptimalPriceGivenRealQ(BigDecimal q) throws NoPrice {
 
-		double perceivedQ = getPerceivedQuality(realQ);
-		double cost = getUnitCost(realQ);
+		BigDecimal perceivedQ = getPerceivedQuality(q);
+		double cost = getUnitCost(q);
 
-		return OptimalPrice.get(perceivedQ, cost, new FirmsPerceivedQSegments());
+		return OptimalPrice.get(perceivedQ, cost, new ExpectedMarket(this));
 
-	}
-
-	private double getRandomInitialQuality() {
-		double q = RandomHelper.nextDoubleFromTo(0.0, Offer.getMaxInitialQuality());
-
-		if (Market.firms.firmsByQ.containsKey(q))
-
-			if (q > Double.MIN_VALUE)
-				q = q - Double.MIN_VALUE;
-			else
-				q = q + Double.MIN_VALUE;
-
-		return q;
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.RESET_DEMAND_PRIORITY, interval = 1)
@@ -137,27 +131,32 @@ public class Firm {
 	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1)
 	public void makeOffer() {
 
-		double oldQ = offer.getQuality();
+		Offer newOf = ImprovingOffer.get(this, getDeltaOffer());
 
-		offer = ImprovingOffer.get(this);
-		double newQ = offer.getQuality();
+		BigDecimal currQ = getQuality();
+		BigDecimal newQ = newOf.getQuality();
 
-		// Need to Reorder fimrsByQ?
-		if (oldQ != newQ) {
-			Market.firms.firmsByQ.remove(oldQ);
+		// Quality is not used by any other firm
+		assert (!Market.firms.firmsByQ.containsKey(newOf.getQuality()) || (newQ.compareTo(currQ) == 0));
+
+		if (newQ.compareTo(currQ) != 0) {
+
+			Market.firms.firmsByQ.remove(currQ);
 			Market.firms.firmsByQ.put(newQ, this);
 		}
 
+		setDeltaOffer(Offer.minus(newOf, getOffer()));
 		updateConsumerKnowledge();
 
 	}
 
-	public double getPerceivedQuality() {
-		return getQuality() * getPerceptionDiscount();
+	public BigDecimal getPerceivedQuality() {
+		return getPerceivedQuality(getQuality());
 	}
 
-	public double getPerceivedQuality(double q) {
-		return q * getPerceptionDiscount();
+	public BigDecimal getPerceivedQuality(BigDecimal realQuality) {
+		return realQuality.multiply(BigDecimal.valueOf(getPerceptionDiscount())).setScale(Offer.getQualityScale(),
+				Offer.getQualityRounding());
 	}
 
 	private double getPerceptionDiscount() {
@@ -170,6 +169,7 @@ public class Firm {
 
 		double avgDiscountFactor = (Double) GetParameter("qualityDiscountMean");
 		return (triedBy + avgDiscountFactor * notTriedBy) / mktSize;
+
 	}
 
 	public Offer getPerceivedOffer() {
@@ -230,11 +230,11 @@ public class Firm {
 		notYetKnownBy.addAll(Market.consumers);
 
 		// Take out of the list the initial "knower's"
-		getFromIgnorance((int) FastMath.round((Double) GetParameter("initiallyKnownByPerc") * Market.consumers.size()));
+		getFromIgnorance( FastMath.round((Double) GetParameter("initiallyKnownByPerc") * Market.consumers.size()));
 
 	}
 
-	private void getFromIgnorance(int amount) {
+	private void getFromIgnorance(long amount) {
 		Consumer c;
 
 		for (int k = 0; (k < amount) && !notYetKnownBy.isEmpty(); k++) {
@@ -274,16 +274,17 @@ public class Firm {
 	}
 
 	private double calcProfit() {
-		return (getPrice() - getUnitCost(getQuality())) * getDemand() - fixedCost;
+		return (getPrice().doubleValue() - getUnitCost(getQuality())) * getDemand() - fixedCost;
 	}
 
-	public double getUnitCost(double quality) {
+	public double getUnitCost(BigDecimal quality) {
 		// Cost grows quadratically with quality
-		return FastMath.pow(quality / costParameter, 2.0);
+		return FastMath.pow(quality.doubleValue() / costParameter, 2);
+
 	}
 
-	public double getMarginalCostOfQuality(double q) {
-		return 2.0 / FastMath.pow(costParameter, 2.0) * q;
+	public double getMarginalCostOfQuality(BigDecimal realQ) {
+		return 2.0 / FastMath.pow(costParameter, 2.0) * realQ.doubleValue();
 	}
 
 	private boolean isToBeKilled() {
@@ -330,10 +331,18 @@ public class Firm {
 
 		Market.firms.addToFirmLists(this);
 	}
+	
+	public double getKnownByPerc(){
+		return 1.0 - (double)notYetKnownBy.size()/ (double)Consumers.getMarketSize();
+	}
 
 	/*
 	 * Getters to probe
 	 */
+
+	public void setDeltaOffer(DeltaOffer deltaOffer) {
+		this.deltaOffer = deltaOffer;
+	}
 
 	public int getDemand() {
 		return demand;
@@ -348,14 +357,14 @@ public class Firm {
 	}
 
 	public double getSales() {
-		return getDemand() * getPrice();
+		return getDemand() * getPrice().doubleValue();
 	}
 
-	public double getPrice() {
+	public BigDecimal getPrice() {
 		return offer.getPrice();
 	}
 
-	public double getQuality() {
+	public BigDecimal getQuality() {
 		return offer.getQuality();
 	}
 
@@ -393,15 +402,27 @@ public class Firm {
 	}
 
 	public double getGrossMargin() {
-		return (getPrice() - getUnitCost(getQuality())) / getPrice();
+		return (getPrice().doubleValue() - getUnitCost(getQuality())) / getPrice().doubleValue();
 	}
 
 	public double getMargin() {
-		return getProfit() / (getDemand() * getPrice());
+		return getProfit() / (getDemand() * getPrice().doubleValue());
+	}
+
+	public DeltaOffer getDeltaOffer() {
+		return deltaOffer;
 	}
 
 	public String toString() {
 		return ID;
+	}
+
+	public StrategicPreference getStratPref() {
+		return stratPref;
+	}
+
+	public void setStratPref(StrategicPreference stratPref) {
+		this.stratPref = stratPref;
 	}
 
 }

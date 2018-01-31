@@ -1,29 +1,32 @@
 package optimalPrice;
 
+import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import firms.Firm;
-import firms.FirmsPerceivedQSegments;
-import offer.Offer;
+import firms.ExpectedMarket;
 
 public class NeighborsByPriceToExpel implements Iterator<Neighbors> {
-	FirmsPerceivedQSegments seg;
-	double perceivedQ, cost;
+	ExpectedMarket expMkt;
+	BigDecimal perceivedQ;
+	BigDecimal minPrice;
 	Neighbors currNeighbors;
 	Iterator<ToBeExpelled> itToBeExpelled;
 
-	NeighborsByPriceToExpel(FirmsPerceivedQSegments seg, double perceivedQ, double cost) throws NoPrice {
-		this.seg = seg;
+	NeighborsByPriceToExpel(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice) throws NoPrice {
+		this.expMkt = expMkt;
 		this.perceivedQ = perceivedQ;
-		this.cost = cost;
+		this.minPrice = minPrice;
 
-		double minPrice = Offer.getMinPrice(cost, perceivedQ);
-
-		itToBeExpelled = seg.stream().map(new AddPriceToBeExpelled(seg, perceivedQ))
-				.filter(toBeExp -> toBeExp.priceToBeExpelled > minPrice)
-				.sorted(new CompareByPriceToExpel(seg, perceivedQ)).collect(Collectors.toList()).iterator();
+		// Note that a neighbor that is expelled with any price has a
+		// priceToBeExpelled == null
+		// They are take out of the iterator
+		itToBeExpelled = expMkt.stream().map(new AddPriceToBeExpelled(expMkt, perceivedQ))
+				.filter(toBeExp -> toBeExp.priceToBeExpelled != null)
+				.filter(toBeExp -> toBeExp.priceToBeExpelled.compareTo(minPrice) >= 0)
+				.sorted(new CompareByPriceToExpel(expMkt, perceivedQ)).collect(Collectors.toList()).iterator();
 
 		setInitialcurrNeighbors();
 
@@ -31,16 +34,16 @@ public class NeighborsByPriceToExpel implements Iterator<Neighbors> {
 
 	private void setInitialcurrNeighbors() throws NoPrice {
 
-		Firm loF = seg.getLowerFirmGivenQ(perceivedQ);
-		Firm hiF = seg.getHigherFirmGivenQ(perceivedQ);
+		Firm loF = expMkt.getLowerFirmGivenQ(perceivedQ);
+		Firm hiF = expMkt.getHigherFirmGivenQ(perceivedQ);
 
-		currNeighbors = new Neighbors(seg, perceivedQ, cost, loF, hiF);
+		currNeighbors = new Neighbors(expMkt, perceivedQ, minPrice, loF, hiF);
 
-		while ((currNeighbors.loLimit >= currNeighbors.hiLimit) && hasNext()) {
+		while ((currNeighbors.loPriceLimit.compareTo(currNeighbors.hiPriceLimit) >= 0) && hasNext()) {
 			currNeighbors = next();
 		}
 
-		if (currNeighbors.loLimit >= currNeighbors.hiLimit)
+		if (currNeighbors.loPriceLimit.compareTo(currNeighbors.hiPriceLimit) >= 0)
 			throw new NoPrice();
 
 	}
@@ -62,16 +65,19 @@ public class NeighborsByPriceToExpel implements Iterator<Neighbors> {
 			Firm firmToBeExpelled = toBeExpelled.f;
 
 			// Expel the firm to be expelled
-			if (firmToBeExpelled.equals(currNeighbors.getLoF()))
-				currNeighbors.setLoF(seg.lower(firmToBeExpelled));
+			if (firmToBeExpelled == currNeighbors.getLoF())
+				currNeighbors.setLoF(expMkt.lower(firmToBeExpelled));
 
 			else {
-				assert firmToBeExpelled.equals(currNeighbors.getHiF());
-				currNeighbors.setHiF(seg.higher(firmToBeExpelled));
+				assert (firmToBeExpelled == currNeighbors.getHiF());
+				currNeighbors.setHiF(expMkt.higher(firmToBeExpelled));
 
 			}
 
-			return currNeighbors;
+			if (currNeighbors.loPriceLimit.compareTo(currNeighbors.hiPriceLimit) >= 0)
+				return null;
+			else
+				return currNeighbors;
 		}
 
 	}

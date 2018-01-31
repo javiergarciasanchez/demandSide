@@ -10,6 +10,7 @@ import graphs.FirmsDemandProjection;
 import graphs.FirmsProfitProjection;
 import graphs.MargUtilProjection;
 import graphs.Scale;
+import offer.Offer;
 
 import java.util.ArrayList;
 
@@ -56,6 +57,7 @@ public class Market extends DefaultContext<Object> implements
 		Consumer.resetStaticVars();
 		Consumers.resetStaticVars();
 		Firm.resetStaticVars();
+		Offer.resetStaticVars();
 		Scale.resetStaticVars();
 
 		// Initialize ToBeKilled

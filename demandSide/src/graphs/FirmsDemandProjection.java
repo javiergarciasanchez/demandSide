@@ -1,5 +1,7 @@
 package graphs;
 
+import java.math.BigDecimal;
+
 import consumers.Consumers;
 import firms.Firm;
 import firms.Firms;
@@ -35,8 +37,8 @@ public class FirmsDemandProjection {
 				qualityToCoord(firm.getQuality()));
 	}
 
-	private double priceToCoord(double price) {
-		return (price - Scale.getMinPrice())
+	private double priceToCoord(BigDecimal price) {
+		return (price.doubleValue() - Scale.getMinPrice())
 				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
@@ -45,8 +47,8 @@ public class FirmsDemandProjection {
 		return (double)demand / (double) Consumers.getMarketSize() * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
-	private double qualityToCoord(double quality) {
-		return MAX_Z - ((quality - Scale.getMinQuality())
+	private double qualityToCoord(BigDecimal quality) {
+		return MAX_Z - ((quality.doubleValue() - Scale.getMinQuality())
 				/ (Scale.getMaxQuality() - Scale.getMinQuality())
 				* (MAX_Z - MIN_Z) + MIN_Z);
 	}

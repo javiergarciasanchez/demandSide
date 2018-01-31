@@ -16,5 +16,9 @@ public class StrategicPreference {
 	public ImprovingOffer adjustImprovingDeltaOffer(ImprovingOffer dOffer){
 		return dOffer;
 	}
+	
+	public boolean forQuality(){
+		return true;
+	}
 
 }
