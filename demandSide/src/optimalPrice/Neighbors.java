@@ -1,70 +1,68 @@
 package optimalPrice;
 
 import java.math.BigDecimal;
-
+import java.util.Optional;
 import firms.Firm;
 import firms.ExpectedMarket;
 
 public class Neighbors {
-	private Firm loF, hiF;
+	private Optional<Firm> loF, hiF;
 	ExpectedMarket expMkt;
 	BigDecimal perceivedQ, minPrice;
 	BigDecimal loPriceLimit, hiPriceLimit;
 
-	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Firm loF, Firm hiF) {
+	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Optional<Firm> loF,
+			Optional<Firm> hiF) {
 		this.expMkt = expMkt;
 		this.perceivedQ = perceivedQ;
 		this.minPrice = minPrice;
 		this.loF = loF;
 		this.hiF = hiF;
 
-		setPriceLimits(null);
+		// No previous firm
+		setPriceLimits(Optional.empty());
 
 	}
 
-	private void setPriceLimits(Firm prevF) {
+	private void setPriceLimits(Optional<Firm> prevF) {
 
 		// Setting loPriceLimit
+		// Low price limit is the maximum among the price to expel low firm,
+		// price to expel high firm and minimum price
 		loPriceLimit = minPrice;
-
-		// Note that if price to Expel is null means that any price would expel loF
-		// thus previous loLimit is kept (loLimit = minPrice or price to expel loF)
-		if ((loF != null) && expMkt.getPriceToExpel(perceivedQ, loF) != null)
-			loPriceLimit = loPriceLimit.max(expMkt.getPriceToExpel(perceivedQ, loF));
-
-		if ((hiF != null) && expMkt.getPriceToExpel(perceivedQ, hiF) != null)
-			loPriceLimit = loPriceLimit.max(expMkt.getPriceToExpel(perceivedQ, hiF));
-
-		// Setting hiLimit
+		expMkt.getPriceToExpel(perceivedQ, loF).ifPresent(p-> loPriceLimit = loPriceLimit.max(p));
+		expMkt.getPriceToExpel(perceivedQ, hiF).ifPresent(p-> loPriceLimit = loPriceLimit.max(p));
+		
+		// Setting hiLimit. It is the minimum among max price to enter and price to expel previous firm
 		hiPriceLimit = ExpectedMarket.getMaxPriceToEnter(perceivedQ, loF, hiF);
-		if ((prevF != null) && expMkt.getPriceToExpel(perceivedQ, prevF) != null)
-			hiPriceLimit = hiPriceLimit.min(expMkt.getPriceToExpel(perceivedQ, prevF));
-
+		expMkt.getPriceToExpel(perceivedQ, prevF).ifPresent(p-> hiPriceLimit = hiPriceLimit.min(p));
+		
 	}
 
-	Firm getLoF() {
+	Optional<Firm> getLoF() {
 		return loF;
 	}
 
-	void setLoF(Firm loF) {
-		Firm prevF = this.loF;
+	void setLoF(Optional<Firm> loF) {
+		Optional<Firm> prevF = this.loF;
 		this.loF = loF;
 		setPriceLimits(prevF);
 	}
 
-	Firm getHiF() {
+	Optional<Firm> getHiF() {
 		return hiF;
 	}
 
-	void setHiF(Firm hiF) {
-		Firm prevF = this.hiF;
+	void setHiF(Optional<Firm> hiF) {
+		Optional<Firm> prevF = this.hiF;
 		this.hiF = hiF;
 		setPriceLimits(prevF);
 	}
 
 	public String toString() {
-		String loFStr = (loF != null) ? loF.toString() : "null";
-		String hiFStr = (hiF != null) ? hiF.toString() : "null";
+		String loFStr = loF.map(Firm::toString).orElse("null");
+		String hiFStr = hiF.map(Firm::toString).orElse("null");
+				
 		return "LoF: " + loFStr + ", HiF: " + hiFStr;
 	}
 }

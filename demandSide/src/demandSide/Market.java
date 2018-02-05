@@ -3,6 +3,7 @@ package demandSide;
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 import firms.Firm;
 import firms.Firms;
+import firms.Offer;
 import graphs.ConsumersProjection;
 import graphs.ConsumptionProjection;
 import graphs.Firms2DProjection;
@@ -10,7 +11,6 @@ import graphs.FirmsDemandProjection;
 import graphs.FirmsProfitProjection;
 import graphs.MargUtilProjection;
 import graphs.Scale;
-import offer.Offer;
 
 import java.util.ArrayList;
 

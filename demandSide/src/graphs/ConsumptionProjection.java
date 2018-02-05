@@ -3,13 +3,11 @@ package graphs;
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import java.math.BigDecimal;
-
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumer;
 import consumers.Consumers;
 import consumers.Pareto;
-import firms.Firm;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -29,32 +27,25 @@ public class ConsumptionProjection {
 		dims[1] = MAX_Y + 0.1;
 		dims[2] = MAX_Z + 0.1;
 
-		space = new ContextSpace<Consumer>("ConsumptionProjection",
-				new SimpleCartesianAdder<Consumer>(), new StickyBorders(), dims);
+		space = new ContextSpace<Consumer>("ConsumptionProjection", new SimpleCartesianAdder<Consumer>(),
+				new StickyBorders(), dims);
 
 		consumers.addProjection(space);
 
 	}
 
 	public void update(Consumer c) {
-		Firm f;
-		if (c.getChosenFirm() == null) {
-			space.moveTo(c, 0.0, margUtilToCoord(c.getMargUtilOfQuality()), 0.0);
-		} else {
 
-			f = c.getChosenFirm();
-			space.moveTo(c, priceToCoord(f.getPrice()),
-					margUtilToCoord(c.getMargUtilOfQuality()),
-					qualityToCoord(f.getQuality()));
-		}
+		space.moveTo(c, 0.0, margUtilToCoord(c.getMargUtilOfQuality()), 0.0);
+
+		c.getChosenFirm().ifPresent(f -> space.moveTo(c, priceToCoord(f.getPrice()),
+				margUtilToCoord(c.getMargUtilOfQuality()), qualityToCoord(f.getQuality())));
 	}
 
 	private int margUtilToCoord(double margUtilOfQuality) {
 
-		return (int) FastMath.min(
-				FastMath.round(margUtilOfQuality / getMaxUtilToDraw()
-						* (MAX_Y - MIN_Y))
-						+ MIN_Y, MAX_Y);
+		return (int) FastMath.min(FastMath.round(margUtilOfQuality / getMaxUtilToDraw() * (MAX_Y - MIN_Y)) + MIN_Y,
+				MAX_Y);
 	}
 
 	private double getMaxUtilToDraw() {
@@ -70,16 +61,13 @@ public class ConsumptionProjection {
 	}
 
 	private double priceToCoord(BigDecimal price) {
-		return (price.doubleValue() - Scale.getMinPrice())
-				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
-				+ MIN_X;
+		return (price.doubleValue() - Scale.getMinPrice()) / (Scale.getMaxPrice() - Scale.getMinPrice())
+				* (MAX_X - MIN_X) + MIN_X;
 	}
 
 	private double qualityToCoord(BigDecimal quality) {
-		return MAX_Z
-				- ((quality.doubleValue() - Scale.getMinQuality())
-						/ (Scale.getMaxQuality() - Scale.getMinQuality())
-						* (MAX_Z - MIN_Z) + MIN_Z);
+		return MAX_Z - ((quality.doubleValue() - Scale.getMinQuality())
+				/ (Scale.getMaxQuality() - Scale.getMinQuality()) * (MAX_Z - MIN_Z) + MIN_Z);
 	}
 
 }

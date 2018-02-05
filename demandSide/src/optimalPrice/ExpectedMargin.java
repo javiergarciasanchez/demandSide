@@ -1,22 +1,24 @@
 package optimalPrice;
 
+import java.util.Optional;
+
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 import consumers.Consumers;
-import offer.Offer;
+import firms.Offer;
 
 public class ExpectedMargin implements UnivariateFunction {
 
 	double q;
 	double cost;
-	Offer loOffer, hiOffer;
+	Optional<Offer> loOffer, hiOffer;
 
-	public ExpectedMargin(double q, double cost, Offer loOffer, Offer hiOffer) {
+	public ExpectedMargin(double q, double cost, Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		this.q = q;
 		this.cost = cost;
-		this.loOffer = loOffer;
-		this.hiOffer = hiOffer;
+		this.loOffer = loOf;
+		this.hiOffer = hiOf;
 
 	}
 

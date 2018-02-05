@@ -4,11 +4,12 @@ import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
 
 import cern.jet.random.Beta;
-import offer.Offer;
+import firms.Offer;
 import repast.simphony.context.DefaultContext;
 import repast.simphony.random.RandomHelper;
 
@@ -105,14 +106,12 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static double expectedQuantity(Offer segOffer, Offer segLowOffer, Offer segHighOffer) {
-
-		assert segOffer != null;
+	public static double expectedQuantity(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
 
 		double demandAboveLoLimit, demandAboveHiLimit;
 
-		demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(segLowOffer, segOffer));
-		demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(segOffer, segHighOffer));
+		demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(loOffer, Optional.of(segOffer)));
+		demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(Optional.of(segOffer), hiOffer));
 
 		if (demandAboveLoLimit > demandAboveHiLimit)
 			return demandAboveLoLimit - demandAboveHiLimit;
@@ -121,7 +120,7 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static double expectedQuantity(Double p, Double q, Offer segLowOffer, Offer segHighOffer) {
+	public static double expectedQuantity(Double p, Double q, Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		assert ((p != null) && (q != null));
 
@@ -129,19 +128,20 @@ public class Consumers extends DefaultContext<Consumer> {
 		double loLimit, hiLimit;
 		double demandAboveLoLimit, demandAboveHiLimit;
 
-		if (segLowOffer != null) {
-			loP = segLowOffer.getPrice().doubleValue();
-			loQ = segLowOffer.getQuality().doubleValue();
+		if (loOf.isPresent()) {
+			loP = loOf.get().getPrice().doubleValue();
+			loQ = loOf.get().getQuality().doubleValue();
 		} else {
 			loP = null;
 			loQ = null;
 		}
+		
 		loLimit = Offer.limit(loP, loQ, p, q);
 		demandAboveLoLimit = getExpectedConsumersAbove(loLimit);
-
-		if (segHighOffer != null) {
-			hiP = segHighOffer.getPrice().doubleValue();
-			hiQ = segHighOffer.getQuality().doubleValue();
+		
+		if (hiOf.isPresent()) {
+			hiP = hiOf.get().getPrice().doubleValue();
+			hiQ = hiOf.get().getQuality().doubleValue();
 		} else {
 			hiP = null;
 			hiQ = null;

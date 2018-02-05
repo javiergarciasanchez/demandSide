@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <parameters>
-
 	<parameter name="randomSeed" displayName="Default Random Seed"
-		type="int" defaultValue="1" />
-	<!-- type="int" defaultValue="__NULL__" /> -->
-
+		type="int" defaultValue="__NULL__" />
 	<parameter name="fixedCostStdDevPerc"
 		displayName="Fixed Cost Standard Deviation as Percent of Mean" type="double"
 		defaultValue="0.05" isReadOnly="true"
@@ -45,10 +42,10 @@
 		displayName="Recognition Threshold for Expectations Firms to start maximizing"
 		type="double" defaultValue="0.5" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="defaultQualityStep" displayName="Default Quality Adjustment"
+	<parameter name="qualityStep" displayName="Quality Step per Period"
 		type="double" defaultValue="1.0" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
-	<parameter name="defaultPriceStep" displayName="Default Price Adjustment"
+	<parameter name="priceStep" displayName="Price Step per Period"
 		type="double" defaultValue="1.0" isReadOnly="false"
 		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
 	<parameter name="qualityThreshold"

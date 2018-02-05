@@ -64,6 +64,11 @@ public class Firms extends DefaultContext<Firm> {
 		firmsByQ.put(f.getQuality(), f);
 
 	}
+	
+	public void updateFirmLists(Firm f, BigDecimal prevQ, BigDecimal newQ){
+		firmsByQ.remove(prevQ);
+		firmsByQ.put(newQ, f);
+	}
 
 	public void removeFromFirmLists(Firm f) {
 

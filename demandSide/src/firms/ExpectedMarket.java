@@ -2,9 +2,11 @@ package firms;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 import java.util.TreeSet;
+import java.util.stream.Stream;
+
 import demandSide.Market;
-import offer.Offer;
 
 public class ExpectedMarket extends TreeSet<Firm> {
 
@@ -13,7 +15,7 @@ public class ExpectedMarket extends TreeSet<Firm> {
 	public ExpectedMarket(Firm omitFirm) {
 
 		super(new CompareByPerceivedQ());
-		Market.firms.stream().filter(f -> (!f.equals(omitFirm))).forEach(f -> add(f));
+		Market.firms.stream().filter(f -> (!f.equals(omitFirm))).forEach(this::add);
 
 	}
 
@@ -36,94 +38,101 @@ public class ExpectedMarket extends TreeSet<Firm> {
 
 	}
 
+	private void takeOutExpelledFirmsNV(Firm firm) {
+
+		BigDecimal q = firm.getPerceivedQuality();
+		BigDecimal p = firm.getPrice();
+
+		Stream<Firm> toRemove = Stream.concat(headSet(firm).stream(), tailSet(firm, false).stream());
+
+		toRemove.filter(f -> getPriceToExpel(q, Optional.of(f)).isPresent())
+				.filter(f -> p.compareTo(getPriceToExpel(q, Optional.of(f)).get()) <= 0)
+				.forEach(this::remove);
+	}
+
 	private void takeOutExpelledFirms(Firm f) {
 
-		Firm loF, hiF;
+		Optional<Firm> loF, hiF;
 		BigDecimal q = f.getPerceivedQuality();
 		BigDecimal p = f.getPrice();
 
-		loF = lower(f);
-		while (loF != null) {
-			if ((getPriceToExpel(q, loF) == null) || (p.compareTo(getPriceToExpel(q, loF)) <= 0)) {
-				remove(loF);
-				loF = lower(loF);
+		loF = Optional.ofNullable(lower(f));
+		while (loF.isPresent()) {
+			if ((getPriceToExpel(q, loF).isPresent()) || (p.compareTo(getPriceToExpel(q, loF).get()) <= 0)) {
+				remove(loF.get());
+				loF = Optional.ofNullable(lower(loF.get()));
 			} else
 				break;
 		}
 
-		hiF = higher(f);
-		while (hiF != null) {
-			if ((getPriceToExpel(q, hiF) == null) || (p.compareTo(getPriceToExpel(q, hiF)) <= 0)) {
-				remove(hiF);
-				hiF = higher(hiF);
+		hiF = Optional.ofNullable(higher(f));
+		while (hiF.isPresent()) {
+			if ((!getPriceToExpel(q, hiF).isPresent()) || (p.compareTo(getPriceToExpel(q, hiF).get()) <= 0)) {
+				remove(hiF.get());
+				hiF = Optional.ofNullable(higher(hiF.get()));
 			} else
 				break;
 		}
 
 	}
 
-	private Offer getLoOffer(Firm f) {
-
-		Firm lo = lower(f);
-		return (lo != null) ? lo.getPerceivedOffer() : null;
-
+	private Optional<Offer> getLoOffer(Firm f) {
+		return Optional.ofNullable(lower(f)).map(lo -> lo.getPerceivedOffer());
 	}
 
-	private Offer getHiOffer(Firm f) {
-
-		Firm hi = higher(f);
-		return (hi != null) ? hi.getPerceivedOffer() : null;
-
+	private Optional<Offer> getHiOffer(Firm f) {
+		return Optional.ofNullable(higher(f)).map(hi -> hi.getPerceivedOffer());
 	}
 
 	private double getLoLimit(Firm f) {
-
-		return Offer.limit(getLoOffer(f), f.getPerceivedOffer());
-
+		return Offer.limit(getLoOffer(f), Optional.of(f.getPerceivedOffer()));
 	}
 
 	private double getHiLimit(Firm f) {
-
-		return Offer.limit(f.getPerceivedOffer(), getHiOffer(f));
-
+		return Offer.limit(Optional.of(f.getPerceivedOffer()), getHiOffer(f));
 	}
 
-	public Firm getLowerFirmGivenQ(BigDecimal perceivedQ) {
+	public Optional<Firm> getLowerFirmGivenQ(BigDecimal perceivedQ) {
 
 		// The reduce operation is to get the highest element of the ones that
 		// have lower perceived q
-		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) <= 0).reduce((a, b) -> b)
-				.orElse(null);
+		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) <= 0).reduce((a, b) -> b);
 
 	}
 
-	public Firm getHigherFirmGivenQ(BigDecimal perceivedQ) {
+	public Optional<Firm> getHigherFirmGivenQ(BigDecimal perceivedQ) {
 
-		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) > 0).findFirst().orElse(null);
+		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) > 0).findFirst();
 
 	}
 
 	/*
 	 * It returns the price below which f is expelled.
 	 * 
-	 * In case any price expels f, it returns NULL
+	 * In case any price expels f, it returns empty
 	 * 
 	 * In case no price expels f it returns 0
 	 */
-	public BigDecimal getPriceToExpel(BigDecimal q, Firm f) {
-		
-		assert (f != null);
+	public Optional<BigDecimal> getPriceToExpel(BigDecimal q, Optional<Firm> optF) {
+
+		Firm f;
+
+		if (optF.isPresent())
+			f = optF.get();
+		else
+			return Optional.empty();
 
 		BigDecimal firmPerceivedQ = f.getPerceivedQuality();
 		BigDecimal retval;
 
 		if (q.compareTo(firmPerceivedQ) == 0)
 			retval = f.getPrice();
+
 		else if (firmPerceivedQ.compareTo(q) < 0) {
 			// price + loLimit * (q - percQ)
 			if (getLoLimit(f) == Double.POSITIVE_INFINITY)
 				// Any price expels f
-				retval = null;
+				return Optional.empty();
 			else
 				retval = f.getPrice().add(BigDecimal.valueOf(getLoLimit(f)).multiply(q.subtract(firmPerceivedQ)));
 		} else {
@@ -136,30 +145,28 @@ public class ExpectedMarket extends TreeSet<Firm> {
 		}
 
 		// It rounds downward to make sure the price returned would expel f
-		return retval.setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
+		return Optional.of(retval.setScale(Offer.getPriceScale(), RoundingMode.FLOOR));
 	}
 
-	public static BigDecimal getMaxPriceToEnter(BigDecimal perceivedQ, Firm loF, Firm hiF) {
-
-		if (hiF == null)
-			return Offer.getMaxPrice();
+	public static BigDecimal getMaxPriceToEnter(BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
 
 		BigDecimal loP, loQ, hiP, hiQ;
 
-		hiP = hiF.getPrice();
-		hiQ = hiF.getPerceivedQuality();
-
-		if (loF == null) {
-			loP = BigDecimal.ZERO;
-			loQ = BigDecimal.ZERO;
-		} else {
-			loP = loF.getPrice();
-			loQ = loF.getPerceivedQuality();
-		}
-
+		if (!hiF.isPresent())
+			return Offer.getMaxPrice();
+		
+		// note that null will never be assigned because hiF is present 
+		hiP = hiF.map(Firm::getPrice).orElse(null);
+		hiQ = hiF.map(Firm::getQuality).orElse(null);
+		
+		loP = loF.map(Firm::getPrice).orElse(BigDecimal.ZERO);
+		loQ = loF.map(Firm::getPerceivedQuality).orElse(BigDecimal.ZERO);
+		
 		if (hiQ.compareTo(loQ) <= 0)
 			return BigDecimal.ZERO;
-		else {
+		else
+
+		{
 
 			// maxPrice = (hiP * (percQ - loQ) + loP * (hiQ - percQ)) / (hiQ -
 			// loQ)

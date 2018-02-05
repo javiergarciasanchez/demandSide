@@ -1,26 +1,27 @@
-package offer;
+package firms;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumers;
 import demandSide.Market;
-import firms.Firm;
-import firms.StrategicPreference;
+import improvingOffer.DecisionResult;
 import repast.simphony.random.RandomHelper;
 
 public class Offer {
 
 	private static int priceScale, qualityScale;
 	private static BigDecimal maxPrice, maxQuality;
+	private static BigDecimal priceStep, qualityStep;
 	private static BigDecimal minDeltaPrice, minDeltaQuality;
 
-	private BigDecimal quality;
-	private BigDecimal price;
+	private BigDecimal quality = BigDecimal.ZERO;
+	private BigDecimal price = BigDecimal.ZERO;
 
 	public Offer() {
 	}
@@ -31,6 +32,15 @@ public class Offer {
 
 		setQuality(q);
 		setPrice(p);
+	}
+
+	public Offer(Optional<DecisionResult> dr) {
+
+		dr.ifPresent(d -> {
+			price = d.getPrice();
+			quality = d.getQuality();
+		});
+
 	}
 
 	public Offer(Offer offer) {
@@ -50,6 +60,9 @@ public class Offer {
 
 		maxPrice = BigDecimal.valueOf((Integer) GetParameter("maxPrice"));
 		maxQuality = BigDecimal.valueOf((Integer) GetParameter("maxQuality"));
+
+		priceStep = BigDecimal.valueOf((Double) GetParameter("priceStep"));
+		qualityStep = BigDecimal.valueOf((Double) GetParameter("qualityStep"));
 
 		minDeltaPrice = BigDecimal.ONE.movePointLeft(priceScale).setScale(priceScale);
 		minDeltaQuality = BigDecimal.ONE.movePointLeft(qualityScale).setScale(qualityScale);
@@ -82,15 +95,16 @@ public class Offer {
 		return maxPrice;
 	}
 
-	public static boolean equivalentOffers(Offer loOffer, Offer hiOffer) {
+	public static boolean equivalentOffers(Optional<Offer> loOf, Optional<Offer> hiOf) {
 
-		if ((loOffer == null) && (hiOffer == null))
+		if ((!loOf.isPresent()) && (!hiOf.isPresent()))
 			return true;
-		else if ((loOffer == null) || (hiOffer == null))
+		else if ((!loOf.isPresent()) || (!hiOf.isPresent()))
 			return false;
 		else
-			// of1 and of2 both not null
-			return ((loOffer.price.compareTo(hiOffer.price) == 0) && (loOffer.quality.compareTo(hiOffer.quality) == 0));
+			// of1 and of2 both present
+			return ((loOf.get().getPrice().compareTo(hiOf.get().getPrice()) == 0)
+					&& (loOf.get().getQuality().compareTo(hiOf.get().getQuality()) == 0));
 	}
 
 	/*
@@ -100,25 +114,25 @@ public class Offer {
 	 * choose hiOffer When there is no limit, ie hiOf demand is zero, function
 	 * returns null
 	 */
-	public static double limit(Offer loOf, Offer hiOf) {
+	public static double limit(Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		if (equivalentOffers(loOf, hiOf))
 			throw new Error("Offers should be different");
 
-		if (loOf == null)
-			// Note that hiOf is not null, otherwise they would be equal
-			return Consumers.getMinMargUtilOfQualityAceptingOffer(hiOf);
+		if (! loOf.isPresent())
+			// Note that hiOf is present, otherwise they would be equal
+			return Consumers.getMinMargUtilOfQualityAceptingOffer(hiOf.get());
 
-		if (hiOf == null)
+		if (! hiOf.isPresent())
 			return Double.POSITIVE_INFINITY;
 
 		BigDecimal loQ, hiQ;
-		loQ = loOf.getQuality();
-		hiQ = hiOf.getQuality();
+		loQ = loOf.get().getQuality();
+		hiQ = hiOf.get().getQuality();
 
 		BigDecimal loP, hiP;
-		loP = loOf.getPrice();
-		hiP = hiOf.getPrice();
+		loP = loOf.get().getPrice();
+		hiP = hiOf.get().getPrice();
 
 		if (loQ.compareTo(hiQ) > 0)
 			throw new Error("higher offer quality should be >= than low offer quality");
@@ -175,42 +189,20 @@ public class Offer {
 			return Double.POSITIVE_INFINITY;
 
 		} else
-			
+
 			return FastMath.max((hiP - loP) / (hiQ - loQ), Consumers.getMinMargUtilOfQuality());
 
 	}
 
-	public static DeltaOffer minus(Offer a, Offer b) {
-		// Calculates a - b
-		BigDecimal dP = a.getPrice().subtract(b.getPrice());
-		BigDecimal dQ = a.getQuality().subtract(b.getQuality());
-
-		return new DeltaOffer(dP, dQ);
-	}
-
-	public static BigDecimal getRandomQuality(StrategicPreference stratPref) {
+	public static Optional<BigDecimal> getRandomQuality(StrategicPreference stratPref) {
 
 		double maxIniQ = (double) GetParameter("maxInitialQuality");
 		BigDecimal q = BigDecimal.valueOf(RandomHelper.nextDoubleFromTo(0.0, maxIniQ));
 
-		if (stratPref.forQuality()) {
-			q = getUpWardClosestAvailableQuality(q);
-
-			if (q == null)
-				q = getDownWardClosestAvailableQuality(q);
-
-		} else {
-			q = getDownWardClosestAvailableQuality(q);
-
-			if (q == null)
-				q = getUpWardClosestAvailableQuality(q);
-		}
-
-		return q.setScale(Offer.getQualityScale(), Offer.getQualityRounding());
-
+		return stratPref.getClosestAvailableQuality(q);
 	}
 
-	public static BigDecimal getDownWardClosestAvailableQuality(BigDecimal q) {
+	public static Optional<BigDecimal> getDownWardClosestAvailableQuality(BigDecimal q) {
 		BigDecimal minQ = getMinQuality();
 
 		// Search an available quality moving down
@@ -219,13 +211,13 @@ public class Offer {
 		}
 
 		if (Market.firms.firmsByQ.containsKey(q))
-			return null;
+			return Optional.empty();
 		else
-			return q;
+			return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
 
 	}
 
-	public static BigDecimal getUpWardClosestAvailableQuality(BigDecimal q) {
+	public static Optional<BigDecimal> getUpWardClosestAvailableQuality(BigDecimal q) {
 
 		// Search an available quality moving down
 		while (Market.firms.firmsByQ.containsKey(q) && q.compareTo(maxQuality) < 0) {
@@ -233,9 +225,9 @@ public class Offer {
 		}
 
 		if (Market.firms.firmsByQ.containsKey(q))
-			return null;
+			return Optional.empty();
 		else
-			return q;
+			return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
 
 	}
 
@@ -245,6 +237,14 @@ public class Offer {
 
 	public static BigDecimal getMinDeltaQuality() {
 		return minDeltaQuality;
+	}
+
+	public static BigDecimal getQualityStep() {
+		return qualityStep;
+	}
+
+	public static BigDecimal getPriceStep() {
+		return priceStep;
 	}
 
 	public static int getPriceScale() {

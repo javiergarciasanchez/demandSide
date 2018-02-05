@@ -2,11 +2,12 @@ package consumers;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
 
 import firms.Firm;
-import offer.Offer;
+import firms.Offer;
 import demandSide.Market;
 import demandSide.RecessionsHandler;
 import demandSide.RunPriority;
@@ -16,7 +17,7 @@ public class Consumer {
 
 	private double margUtilOfQuality;
 	private double qualityDiscount;
-	private Firm chosenFirm;
+	private Optional<Firm> chosenFirm;
 
 	// This map collects the known firms, and provides a quality factor
 	// Quality factor is a discount in case consumer has not yet tried the firm
@@ -35,6 +36,8 @@ public class Consumer {
 	public Consumer() {
 
 		Market.consumers.add(this);
+		
+		chosenFirm = Optional.empty();
 
 		knownFirmsQualityFactor = new HashMap<Firm, Double>();
 
@@ -86,17 +89,17 @@ public class Consumer {
 
 		chosenFirm = chooseMaximizingFirm();
 
-		if (chosenFirm != null) {
+		chosenFirm.ifPresent(f -> {
 			// Increase Demand
-			chosenFirm.setDemand(chosenFirm.getDemand() + 1);
+			f.setDemand(f.getDemand() + 1);
 
 			// Check if first time chosen
-			if (firstTimeChosen(chosenFirm)) {
-				chosenFirm.addNewConsumer();
-				addToTriedFirms(chosenFirm);
+			if (firstTimeChosen(f)) {
+				f.addNewConsumer();
+				addToTriedFirms(f);
 
 			}
-		}
+		});
 
 	}
 
@@ -119,17 +122,17 @@ public class Consumer {
 
 	// Returns the firm from the known firms that maximizes utility
 	// if no firm is chosen returns null (all utilities are below 0)
-	private Firm chooseMaximizingFirm() {
+	private Optional<Firm> chooseMaximizingFirm() {
 
 		double maxUtility = 0;
-		Firm maxUtilFirm = null;
+		Optional<Firm> maxUtilFirm = Optional.empty();
 
 		for (Entry<Firm, Double> knownFirm : knownFirmsQualityFactor.entrySet()) {
 
-			double tmpUtil = expectedUtility(knownFirm);
+			double tmpUtil = expectedUtility(knownFirm.getKey(), knownFirm.getValue());
 
 			if (tmpUtil > maxUtility) {
-				maxUtilFirm = knownFirm.getKey();
+				maxUtilFirm = Optional.of(knownFirm.getKey());
 				maxUtility = tmpUtil;
 			}
 		}
@@ -139,19 +142,16 @@ public class Consumer {
 
 	}
 
-	private double expectedUtility(Entry<Firm, Double> knownFirm) {
-		Offer o = knownFirm.getKey().getOffer();
-		double qualityFactor = knownFirm.getValue();
-
+	private double expectedUtility(Firm f, double qualityFactor) {
+		Offer o = f.getOffer();
 		return getMargUtilOfQuality() * o.getQuality().doubleValue() * qualityFactor - o.getPrice().doubleValue();
 	}
 
-	private double utility(Entry<Firm, Double> knownFirm) {
-		Offer o = knownFirm.getKey().getOffer();
-
+	private double realUtility(Firm f, double qualityFactor) {
+		Offer o = f.getOffer();
 		return getMargUtilOfQuality() * o.getQuality().doubleValue() - o.getPrice().doubleValue();
 	}
-	
+
 	public void removeTraceOfFirm(Firm firm) {
 		knownFirmsQualityFactor.remove(firm);
 
@@ -168,37 +168,24 @@ public class Consumer {
 	//
 	// Procedures for inspecting values
 	//
-	public Firm getChosenFirm() {
+	public Optional<Firm> getChosenFirm() {
 		return chosenFirm;
 	}
 
 	public String getChosenFirmID() {
-		if (chosenFirm == null)
-			return "Substitute";
-		else
-			return chosenFirm.toString();
+		return chosenFirm.map(Firm::toString).orElse("Substitute");
 	}
 
 	public double getChosenFirmIntID() {
-		if (chosenFirm == null)
-			return 0.0;
-		else
-			return chosenFirm.getFirmIntID();
+		return chosenFirm.map(Firm::getFirmIntID).orElse((long) 0);
 	}
-	
-	public double getUtility(){
-		if (chosenFirm == null)
-			return 0.0;
-		else
-			return utility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm, knownFirmsQualityFactor.get(chosenFirm)));		
+
+	public double getRealUtility() {
+		return chosenFirm.map(f -> realUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
 	}
 
 	public double getExpectedUtility() {
-		if (chosenFirm == null)
-			return 0.0;
-		else
-			return expectedUtility(new HashMap.SimpleEntry<Firm, Double>(chosenFirm, knownFirmsQualityFactor.get(chosenFirm)));
-
+		return chosenFirm.map(f -> expectedUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
 	}
 
 	public double getConsumerIntID() {

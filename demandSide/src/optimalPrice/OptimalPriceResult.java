@@ -2,7 +2,7 @@ package optimalPrice;
 
 import java.math.BigDecimal;
 
-class OptimalPriceResult {
+public class OptimalPriceResult {
 	BigDecimal price = BigDecimal.ZERO;
 	double margin = 0.;
 	
@@ -15,4 +15,13 @@ class OptimalPriceResult {
 	public String toString(){
 		return "Price: " + price + " - Margin: " + margin; 
 	}
+
+	public BigDecimal getPrice() {
+		return price;
+	}
+	
+	public double getMargin() {
+		return margin;
+	}
+	
 }

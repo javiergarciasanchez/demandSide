@@ -2,6 +2,7 @@ package optimalPrice;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.Optional;
 
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.optim.MaxEval;
@@ -13,19 +14,25 @@ import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import consumers.Consumers;
 import firms.Firm;
+import firms.Offer;
 import firms.ExpectedMarket;
-import offer.Offer;
 
 public class OptimalPrice {
 
-	public static BigDecimal get(BigDecimal perceivedQ, double cost, ExpectedMarket expMkt) throws NoPrice {
+	public static Optional<OptimalPriceResult> get(BigDecimal perceivedQ, double cost, ExpectedMarket expMkt) {
 
 		Neighbors currNeighbors;
 		NeighborsByPriceToExpel neighborsByPriceToExpel;
 		OptimalPriceResult returnResult = null, tempResult = null;
 
 		BigDecimal minPrice = Offer.getMinPrice(cost, perceivedQ);
-		neighborsByPriceToExpel = new NeighborsByPriceToExpel(expMkt, perceivedQ, minPrice);
+
+		try {
+			neighborsByPriceToExpel = new NeighborsByPriceToExpel(expMkt, perceivedQ, minPrice);
+		} catch (NoPrice e) {
+			return Optional.empty();
+		}
+		
 		currNeighbors = neighborsByPriceToExpel.currNeighbors;
 
 		returnResult = getSegmentOptimalResult(expMkt, perceivedQ, cost, currNeighbors);
@@ -39,17 +46,17 @@ public class OptimalPrice {
 				if (tempResult.margin > returnResult.margin)
 					returnResult = tempResult;
 			}
-		}
-
-		return returnResult.price.setScale(Offer.getPriceScale(), Offer.getPriceRounding());
+		}		
+		
+		return Optional.of(returnResult);
 
 	}
 
 	private static OptimalPriceResult getSegmentOptimalResult(ExpectedMarket expMkt, BigDecimal perceivedQ, double cost,
 			Neighbors currNeighbors) {
 
-		Firm loF = currNeighbors.getLoF();
-		Firm hiF = currNeighbors.getHiF();
+		Optional<Firm> loF = currNeighbors.getLoF();
+		Optional<Firm> hiF = currNeighbors.getHiF();
 		BigDecimal loPriceLimit = currNeighbors.loPriceLimit;
 		BigDecimal hiPriceLimit = currNeighbors.hiPriceLimit;
 
@@ -59,8 +66,8 @@ public class OptimalPrice {
 
 		result.price = getSegmentOptimalPrice(expMkt, perceivedQ, cost, currNeighbors);
 
-		Offer loOffer = (loF == null ? null : Firm.getPerceivedOffer(loF));
-		Offer hiOffer = (hiF == null ? null : Firm.getPerceivedOffer(hiF));
+		Optional<Offer> loOffer = loF.map(Firm::getPerceivedOffer);
+		Optional<Offer> hiOffer = hiF.map(Firm::getPerceivedOffer); 				
 
 		result.margin = Consumers.expectedQuantity(new Offer(result.price, perceivedQ), loOffer, hiOffer)
 				* (result.price.doubleValue() - cost);
@@ -72,8 +79,8 @@ public class OptimalPrice {
 	private static BigDecimal getSegmentOptimalPrice(ExpectedMarket expMkt, BigDecimal perceivedQ, double cost,
 			Neighbors currNeighbors) {
 
-		Firm loF = currNeighbors.getLoF();
-		Firm hiF = currNeighbors.getHiF();
+		Optional<Firm> loF = currNeighbors.getLoF();
+		Optional<Firm> hiF = currNeighbors.getHiF();
 		BigDecimal loPriceLimit = currNeighbors.loPriceLimit;
 		BigDecimal hiPriceLimit = currNeighbors.hiPriceLimit;
 
@@ -82,13 +89,9 @@ public class OptimalPrice {
 		double lambda = Consumers.getLambda();
 		BigDecimal retval;
 
-		if (hiF == null) {
+		if (!hiF.isPresent()) {
 
-			BigDecimal loP;
-			if (loF != null)
-				loP = loF.getPrice();
-			else
-				loP = BigDecimal.ZERO;
+			BigDecimal loP = loF.map(Firm::getPrice).orElse(BigDecimal.ZERO);
 
 			// retval = (lambda * cost - loP) / (lambda - 1.0)
 			retval = BigDecimal.valueOf(lambda * cost).subtract(loP).divide(BigDecimal.valueOf(lambda - 1.0),
@@ -98,12 +101,8 @@ public class OptimalPrice {
 
 		} else {
 
-			Offer loOffer = null;
-
-			if (loF != null)
-				loOffer = Firm.getPerceivedOffer(loF);
-
-			Offer hiOffer = Firm.getPerceivedOffer(hiF);
+			Optional<Offer> loOffer = loF.map(Firm::getPerceivedOffer); 
+			Optional<Offer> hiOffer = hiF.map(Firm::getPerceivedOffer);
 
 			ExpectedMargin expectedMargin = new ExpectedMargin(perceivedQ.doubleValue(), cost, loOffer, hiOffer);
 
@@ -127,7 +126,6 @@ public class OptimalPrice {
 				// returning the middle value of segment
 				retval = loPriceLimit.add(hiPriceLimit).divide(BigDecimal.valueOf(2.0), Offer.getPriceScale(),
 						Offer.getPriceRounding());
-				return retval;
 			}
 
 		}
