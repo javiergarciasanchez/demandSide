@@ -5,6 +5,7 @@ import static repast.simphony.essentials.RepastEssentials.GetParameter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.util.FastMath;
 
@@ -13,14 +14,13 @@ import consumers.Consumers;
 import demandSide.Market;
 import demandSide.RunPriority;
 import graphs.Scale;
-import improvingOffer.ImprovingOffer;
 import optimalPrice.OptimalPrice;
 import optimalPrice.OptimalPriceResult;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.essentials.RepastEssentials;
 import repast.simphony.random.RandomHelper;
 
-public class Firm {
+public abstract class Firm {
 
 	private StrategicPreference stratPref;
 
@@ -73,7 +73,7 @@ public class Firm {
 
 		Optional<BigDecimal> optQ;
 
-		optQ = Offer.getRandomQuality(getStratPref());
+		optQ = getRandomQuality();
 
 		if (!optQ.isPresent())
 			// There is no available quality
@@ -82,9 +82,25 @@ public class Firm {
 		Optional<OptimalPriceResult> optPriceResult = getOptimalPriceResultGivenRealQ(optQ.get());
 
 		optPriceResult.ifPresent(opr -> setNewOffer(opr.getPrice(), optQ.get()));
-		
+
 		return optPriceResult.isPresent();
-		
+
+	}
+
+	private Optional<BigDecimal> getRandomQuality() {
+
+		double maxIniQ = (double) GetParameter("maxInitialQuality");
+		BigDecimal q = BigDecimal.valueOf(RandomHelper.nextDoubleFromTo(0.0, maxIniQ));
+
+		return getClosestAvailableQuality(q);
+	}
+
+	public Optional<BigDecimal> getClosestAvailableQuality(BigDecimal q){
+
+		// If quality is occupied it tries first upward then downward
+		Optional<BigDecimal> up = Offer.getUpWardClosestAvailableQuality(q);
+		return (up.isPresent() ? up : Offer.getDownWardClosestAvailableQuality(q));
+
 	}
 
 	private void setNewOffer(BigDecimal p, BigDecimal q) {
@@ -126,8 +142,19 @@ public class Firm {
 	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1)
 	public void makeOffer() {
 
-		// if there is no improving offer keep current one
-		ImprovingOffer.get(this, getStratPref()).ifPresent(this::updateOffer);
+		ExpectedMarket expMkt = new ExpectedMarket(this);
+
+		getRealQualityOptions().map(q -> getDecisionResult(q, expMkt)).filter(dr -> dr.isPresent())
+				.max(new DecisionComparator()).map(Offer::new).ifPresent(this::updateOffer);
+
+	}
+
+	public abstract Stream<BigDecimal> getRealQualityOptions();
+
+	private Optional<DecisionResult> getDecisionResult(BigDecimal realQ, ExpectedMarket expMkt) {
+
+		return OptimalPrice.get(getPerceivedQuality(realQ), getUnitCost(realQ), expMkt)
+				.map(r -> new DecisionResult(r.getPrice(), realQ, r.getMargin()));
 
 	}
 

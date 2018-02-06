@@ -1,4 +1,4 @@
-package improvingOffer;
+package firms;
 
 import java.util.Comparator;
 import java.util.Optional;

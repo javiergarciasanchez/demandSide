@@ -7,7 +7,14 @@ import org.apache.commons.math3.util.FastMath;
 
 import demandSide.Market;
 import demandSide.RunPriority;
+import firmTypes.IncreaseQFirm;
+import firmTypes.NoQChangeFirm;
+import firmTypes.NoQIncreaseFirm;
+import firmTypes.NoQReductionFirm;
+import firmTypes.StandardFirm;
 import cern.jet.random.Gamma;
+import cern.jet.random.Uniform;
+
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import repast.simphony.context.DefaultContext;
@@ -17,7 +24,10 @@ import repast.simphony.essentials.RepastEssentials;
 
 public class Firms extends DefaultContext<Firm> {
 
+	private static final int FIRM_TYPES = 4;
+
 	// Random distributions
+	private Uniform firmTypes;
 	private Gamma fixedCostDistrib;
 
 	// Parameters for Firms
@@ -51,11 +61,13 @@ public class Firms extends DefaultContext<Firm> {
 		lamda = alfa / mean;
 		fixedCostDistrib = RandomHelper.createGamma(alfa, lamda);
 
+		firmTypes = RandomHelper.createUniform(1, FIRM_TYPES);
+
 	}
 
 	public void createFirmLists() {
 
-		firmsByQ = new TreeMap<BigDecimal, Firm>();		
+		firmsByQ = new TreeMap<BigDecimal, Firm>();
 
 	}
 
@@ -64,8 +76,8 @@ public class Firms extends DefaultContext<Firm> {
 		firmsByQ.put(f.getQuality(), f);
 
 	}
-	
-	public void updateFirmLists(Firm f, BigDecimal prevQ, BigDecimal newQ){
+
+	public void updateFirmLists(Firm f, BigDecimal prevQ, BigDecimal newQ) {
 		firmsByQ.remove(prevQ);
 		firmsByQ.put(newQ, f);
 	}
@@ -74,7 +86,7 @@ public class Firms extends DefaultContext<Firm> {
 
 		firmsByQ.remove(f);
 
-	}	
+	}
 
 	public Gamma getFixedCostDistrib() {
 		return fixedCostDistrib;
@@ -88,7 +100,24 @@ public class Firms extends DefaultContext<Firm> {
 
 		for (int i = 1; i <= (Integer) GetParameter("potencialFirmsPerPeriod"); i++) {
 
-			new Firm();
+			switch (firmTypes.nextInt()) {
+			case 1:
+				new StandardFirm();
+				break;
+			case 2:
+				new NoQChangeFirm();
+				break;
+			case 3:
+				new NoQReductionFirm();
+				break;
+			case 4:
+				new IncreaseQFirm();
+				break;
+			case 5:
+				new NoQIncreaseFirm();
+				break;
+
+			}
 		}
 
 	}
@@ -104,8 +133,8 @@ public class Firms extends DefaultContext<Firm> {
 
 	@SuppressWarnings("unchecked")
 	public static void get() {
-		
-		get((Collection<Firm>)RepastEssentials.FindContext("Firms_Context"));
+
+		get((Collection<Firm>) RepastEssentials.FindContext("Firms_Context"));
 
 	}
 
@@ -115,12 +144,12 @@ public class Firms extends DefaultContext<Firm> {
 		firmsColl.stream().forEach(f -> System.out.println("f" + f.getFirmNumID() + " " + f.getPrice() + " "
 				+ f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
 	}
-	
+
 	public static void get(Collection<Firm> firmsColl, Firm omitFirm) {
 		System.out.println("firm price quality perceivedQ");
 
-		firmsColl.stream().filter(f->(!f.equals(omitFirm))).forEach(f -> System.out.println("f" + f.getFirmNumID() + " " + f.getPrice() + " "
-				+ f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
+		firmsColl.stream().filter(f -> (!f.equals(omitFirm))).forEach(f -> System.out.println("f" + f.getFirmNumID()
+				+ " " + f.getPrice() + " " + f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
 	}
 
 }

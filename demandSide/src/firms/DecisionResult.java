@@ -1,4 +1,4 @@
-package improvingOffer;
+package firms;
 
 import java.math.BigDecimal;
 

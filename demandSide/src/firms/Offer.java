@@ -10,8 +10,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumers;
 import demandSide.Market;
-import improvingOffer.DecisionResult;
-import repast.simphony.random.RandomHelper;
 
 public class Offer {
 
@@ -119,11 +117,11 @@ public class Offer {
 		if (equivalentOffers(loOf, hiOf))
 			throw new Error("Offers should be different");
 
-		if (! loOf.isPresent())
+		if (!loOf.isPresent())
 			// Note that hiOf is present, otherwise they would be equal
 			return Consumers.getMinMargUtilOfQualityAceptingOffer(hiOf.get());
 
-		if (! hiOf.isPresent())
+		if (!hiOf.isPresent())
 			return Double.POSITIVE_INFINITY;
 
 		BigDecimal loQ, hiQ;
@@ -192,14 +190,6 @@ public class Offer {
 
 			return FastMath.max((hiP - loP) / (hiQ - loQ), Consumers.getMinMargUtilOfQuality());
 
-	}
-
-	public static Optional<BigDecimal> getRandomQuality(StrategicPreference stratPref) {
-
-		double maxIniQ = (double) GetParameter("maxInitialQuality");
-		BigDecimal q = BigDecimal.valueOf(RandomHelper.nextDoubleFromTo(0.0, maxIniQ));
-
-		return stratPref.getClosestAvailableQuality(q);
 	}
 
 	public static Optional<BigDecimal> getDownWardClosestAvailableQuality(BigDecimal q) {
