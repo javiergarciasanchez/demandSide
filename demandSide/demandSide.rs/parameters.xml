@@ -2,6 +2,7 @@
 <parameters>
 	<parameter name="randomSeed" displayName="Default Random Seed"
 		type="int" defaultValue="__NULL__" />
+<!-- 		__NULL__ -->
 	<parameter name="fixedCostStdDevPerc"
 		displayName="Fixed Cost Standard Deviation as Percent of Mean" type="double"
 		defaultValue="0.05" isReadOnly="true"

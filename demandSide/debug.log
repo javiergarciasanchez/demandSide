@@ -1402,3 +1402,10 @@ Caused by: java.util.ConcurrentModificationException
 	at firms.Firm.<init>(Firm.java:67)
 	at firms.Firms.addFirms(Firms.java:91)
 	... 9 more
+WARN  [Thread-9] 2018-02-05 18:31:27,810 repast.simphony.ui.GUIScheduleRunner - Caught InterruptedException when running simulation, unpausing.
+java.lang.InterruptedException
+	at java.lang.Object.wait(Native Method)
+	at java.lang.Object.wait(Object.java:502)
+	at repast.simphony.ui.GUIScheduleRunner.go(GUIScheduleRunner.java:137)
+	at repast.simphony.ui.GUIScheduleRunner$ScheduleLoopRunnable.run(GUIScheduleRunner.java:48)
+	at java.lang.Thread.run(Thread.java:745)

@@ -1,6 +1,6 @@
 package optimalPrice;
 
-public class NoPrice extends Exception {
+public class NoNeighbors extends Exception {
 
 	private static final long serialVersionUID = 1L;
 

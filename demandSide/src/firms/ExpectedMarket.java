@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import demandSide.Market;
@@ -38,42 +39,16 @@ public class ExpectedMarket extends TreeSet<Firm> {
 
 	}
 
-	private void takeOutExpelledFirmsNV(Firm firm) {
+	private void takeOutExpelledFirms(Firm firm) {
 
 		BigDecimal q = firm.getPerceivedQuality();
 		BigDecimal p = firm.getPrice();
 
-		Stream<Firm> toRemove = Stream.concat(headSet(firm).stream(), tailSet(firm, false).stream());
-
-		toRemove.filter(f -> getPriceToExpel(q, Optional.of(f)).isPresent())
-				.filter(f -> p.compareTo(getPriceToExpel(q, Optional.of(f)).get()) <= 0)
+		Stream.concat(headSet(firm).stream(), tailSet(firm, false).stream())
+				.filter(f -> getPriceToExpel(q, Optional.of(f)).isPresent())
+				.filter(f -> p.compareTo(getPriceToExpel(q, Optional.of(f)).get()) <= 0).collect(Collectors.toList())
 				.forEach(this::remove);
-	}
-
-	private void takeOutExpelledFirms(Firm f) {
-
-		Optional<Firm> loF, hiF;
-		BigDecimal q = f.getPerceivedQuality();
-		BigDecimal p = f.getPrice();
-
-		loF = Optional.ofNullable(lower(f));
-		while (loF.isPresent()) {
-			if ((getPriceToExpel(q, loF).isPresent()) || (p.compareTo(getPriceToExpel(q, loF).get()) <= 0)) {
-				remove(loF.get());
-				loF = Optional.ofNullable(lower(loF.get()));
-			} else
-				break;
-		}
-
-		hiF = Optional.ofNullable(higher(f));
-		while (hiF.isPresent()) {
-			if ((!getPriceToExpel(q, hiF).isPresent()) || (p.compareTo(getPriceToExpel(q, hiF).get()) <= 0)) {
-				remove(hiF.get());
-				hiF = Optional.ofNullable(higher(hiF.get()));
-			} else
-				break;
-		}
-
+		
 	}
 
 	private Optional<Offer> getLoOffer(Firm f) {
@@ -154,14 +129,14 @@ public class ExpectedMarket extends TreeSet<Firm> {
 
 		if (!hiF.isPresent())
 			return Offer.getMaxPrice();
-		
-		// note that null will never be assigned because hiF is present 
+
+		// note that null will never be assigned because hiF is present
 		hiP = hiF.map(Firm::getPrice).orElse(null);
 		hiQ = hiF.map(Firm::getQuality).orElse(null);
-		
+
 		loP = loF.map(Firm::getPrice).orElse(BigDecimal.ZERO);
 		loQ = loF.map(Firm::getPerceivedQuality).orElse(BigDecimal.ZERO);
-		
+
 		if (hiQ.compareTo(loQ) <= 0)
 			return BigDecimal.ZERO;
 		else
