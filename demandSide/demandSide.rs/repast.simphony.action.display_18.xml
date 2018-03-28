@@ -1,5 +1,5 @@
-<repast.simphony.visualization.engine.CartesianDisplayDescriptor>
-  <name>Sales</name>
+<repast.simphony.visualization.engine.CartesianDisplayDescriptor simphonyVersion="2.5.0">
+  <name>Profit</name>
   <type>2D</type>
   <styles>
     <entry>
@@ -10,7 +10,7 @@
   <editedStyles>
     <entry>
       <string>firms.Firm</string>
-      <string>firms.Firm.style_2.xml</string>
+      <string>firms.Firm.style_3.xml</string>
     </entry>
   </editedStyles>
   <netStyles/>
@@ -23,7 +23,7 @@
     <pType>LAST</pType>
     <duration>-1.0</duration>
     <frequency>REPEAT</frequency>
-    <hashCode>1102384320</hashCode>
+    <hashCode>-1861055900</hashCode>
   </schedParams>
   <layoutClassName>foo.bar.baz</layoutClassName>
   <layoutProjection>Firms2DProjection</layoutProjection>

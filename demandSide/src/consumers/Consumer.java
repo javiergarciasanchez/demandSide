@@ -36,7 +36,7 @@ public class Consumer {
 	public Consumer() {
 
 		Market.consumers.add(this);
-		
+
 		chosenFirm = Optional.empty();
 
 		knownFirmsQualityFactor = new HashMap<Firm, Double>();
@@ -62,8 +62,7 @@ public class Consumer {
 		// because it is implicit in the marginal utility of quality
 		margUtilOfQuality = Consumers.getMargUtilOfQualityDistrib().nextDouble();
 
-		// Upper limit is unbounded. The max marg utility is updated to scale
-		// graphs
+		// Upper limit is unbounded. The max marg utility is updated
 		Consumers.setMaxMargUtilOfQuality(FastMath.max(Consumers.getMaxMargUtilOfQuality(), margUtilOfQuality));
 
 	}
@@ -155,8 +154,10 @@ public class Consumer {
 	public void removeTraceOfFirm(Firm firm) {
 		knownFirmsQualityFactor.remove(firm);
 
-		if (chosenFirm.equals(firm))
-			chosenFirm = null;
+		chosenFirm.ifPresent(f -> {
+			if (f.equals(firm))
+				chosenFirm = Optional.empty();
+		});
 
 	}
 

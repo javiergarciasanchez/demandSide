@@ -55,15 +55,7 @@ public class MargUtilProjection {
 	private double getPoorestConsumerMargUtil(BigDecimal price, BigDecimal quality) {
 		return quality.doubleValue() / price.doubleValue();
 	}
-/*
-	public void add(SegmentLimitOLD sL) {
-		double val = Math.min(sL.getValue(), Consumers.getMaxMargUtilOfQuality());
-		int x = margUtilToCoord(val);
 
-		space.moveTo(sL, x, getFreeY(x, FIRMS_HEIGHT, 2));
-
-	}
-*/
 	private int margUtilToCoord(double margUtilOfQuality) {
 
 		return (int) FastMath.min(FastMath.round(margUtilOfQuality / getMaxUtilToDraw() * (MAX_X - MIN_X)) + MIN_X,

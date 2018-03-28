@@ -9,6 +9,7 @@ import graphs.ConsumptionProjection;
 import graphs.Firms2DProjection;
 import graphs.FirmsDemandProjection;
 import graphs.FirmsProfitProjection;
+import graphs.FirmsSalesProjection;
 import graphs.MargUtilProjection;
 import graphs.Scale;
 
@@ -34,6 +35,7 @@ public class Market extends DefaultContext<Object> implements
 	public static Firms2DProjection firms2DProjection;
 	public static FirmsDemandProjection firmsDemandProjection;
 	public static FirmsProfitProjection firmsProfitProjection;
+	public static FirmsSalesProjection firmsSalesProjection;
 
 	public static ConsumptionProjection consumptionProjection;
 	public static MargUtilProjection margUtilProjection;
@@ -41,7 +43,7 @@ public class Market extends DefaultContext<Object> implements
 	public static ArrayList<Firm> toBeKilled;
 
 	@Override
-	public Context<Object> build(Context<Object> context) {
+	public Context<Object> build(Context<Object> context) {		
 		
 		if (RunEnvironment.getInstance().isBatch())
 			System.out.println("Run: " + RunState.getInstance().getRunInfo().getRunNumber());
@@ -57,6 +59,7 @@ public class Market extends DefaultContext<Object> implements
 		Consumer.resetStaticVars();
 		Consumers.resetStaticVars();
 		Firm.resetStaticVars();
+		Firms.resetStaticVars();
 		Offer.resetStaticVars();
 		Scale.resetStaticVars();
 
@@ -92,6 +95,7 @@ public class Market extends DefaultContext<Object> implements
 		firms2DProjection = new Firms2DProjection(firms);
 		firmsDemandProjection = new FirmsDemandProjection(firms);
 		firmsProfitProjection = new FirmsProfitProjection(firms);
+		firmsSalesProjection = new FirmsSalesProjection(firms);
 
 		return context;
 

@@ -9,11 +9,11 @@ public class NoQChangeFirm extends Firm {
 
 	public Stream<BigDecimal> getRealQualityOptions() {
 		
-		Stream.Builder<BigDecimal> b = Stream.builder();;		
+		Stream.Builder<BigDecimal> realQOpts = Stream.builder();;		
 		
-		b.add(getQuality());
+		realQOpts.add(getQuality());
 		
-		return b.build();		
+		return realQOpts.build();		
 		
 	}
 

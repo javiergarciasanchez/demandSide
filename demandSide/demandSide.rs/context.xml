@@ -5,6 +5,7 @@
 		<projection type="continuous space" id="Firms2DProjection"></projection>
 		<projection type="continuous space" id="FirmsDemandProjection"></projection>
 		<projection type="continuous space" id="FirmsProfitProjection"></projection>
+		<projection type="continuous space" id="FirmsSalesProjection"></projection>
 	</context>
 	<context id="Consumers_Context">
 		<projection type="continuous space" id="ConsumersProjection"></projection>

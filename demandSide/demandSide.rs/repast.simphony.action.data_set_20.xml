@@ -1,6 +1,7 @@
 <repast.simphony.data2.engine.DataSetDescriptor simphonyVersion="2.5.0">
-  <name>FirmsbyType</name>
-  <type>AGGREGATE</type>
+  <name>Consumers</name>
+  <type>NON_AGGREGATE</type>
+  <sourceType>consumers.Consumer</sourceType>
   <inclTick>true</inclTick>
   <inclBatchRun>false</inclBatchRun>
   <inclRandomSeed>false</inclRandomSeed>
@@ -11,53 +12,56 @@
     <pType>LAST</pType>
     <duration>-1.0</duration>
     <frequency>REPEAT</frequency>
-    <hashCode>-1273297334</hashCode>
+    <hashCode>-493556520</hashCode>
   </scheduleParams>
-  <atEnd>true</atEnd>
+  <atEnd>false</atEnd>
   <methodDataSources class="linked-hash-map">
     <entry>
-      <string>NoQCh_AcumP</string>
+      <string>ChosenFirmIntID</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>NoQCh_AcumP</id>
-        <className>firmTypes.NoQChangeFirm</className>
-        <methodName>getProfit</methodName>
-        <aggType>SUM</aggType>
+        <id>ChosenFirmIntID</id>
+        <className>consumers.Consumer</className>
+        <methodName>getChosenFirmIntID</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>IncrQ_AcumP</string>
+      <string>ConsumerID</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>IncrQ_AcumP</id>
-        <className>firmTypes.IncreaseQFirm</className>
-        <methodName>getProfit</methodName>
-        <aggType>SUM</aggType>
+        <id>ConsumerID</id>
+        <className>consumers.Consumer</className>
+        <methodName>getConsumerID</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>NoQIncr_AcumP</string>
+      <string>MargUtilOfQuality</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>NoQIncr_AcumP</id>
-        <className>firmTypes.NoQIncreaseFirm</className>
-        <methodName>getProfit</methodName>
-        <aggType>SUM</aggType>
+        <id>MargUtilOfQuality</id>
+        <className>consumers.Consumer</className>
+        <methodName>getMargUtilOfQuality</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>NoQRed_AcumP</string>
+      <string>QualityDiscount</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>NoQRed_AcumP</id>
-        <className>firmTypes.NoQReductionFirm</className>
-        <methodName>getProfit</methodName>
-        <aggType>SUM</aggType>
+        <id>QualityDiscount</id>
+        <className>consumers.Consumer</className>
+        <methodName>getQualityDiscount</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>StdF_AcumP</string>
+      <string>RealUtility</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>StdF_AcumP</id>
-        <className>firmTypes.StandardFirm</className>
-        <methodName>getProfit</methodName>
-        <aggType>SUM</aggType>
+        <id>RealUtility</id>
+        <className>consumers.Consumer</className>
+        <methodName>getRealUtility</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>ExpectedUtility</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>ExpectedUtility</id>
+        <className>consumers.Consumer</className>
+        <methodName>getExpectedUtility</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
   </methodDataSources>

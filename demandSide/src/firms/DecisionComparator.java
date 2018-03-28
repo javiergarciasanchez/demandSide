@@ -5,15 +5,20 @@ import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
 
-public class DecisionComparator implements Comparator<Optional<DecisionResult>> {
+public class DecisionComparator implements Comparator<Optional<Decision>> {
 
 	@Override
-	public int compare(Optional<DecisionResult> dr1, Optional<DecisionResult> dr2) {
+	public int compare(Optional<Decision> dr1, Optional<Decision> dr2) {
 
-		// Comparator is called after filtering for empty optionals
-		assert (dr1.isPresent() && dr2.isPresent());
+		// Empty decision have the lowest value
+		if (!dr1.isPresent())
+			return -1;
 
-		return (int) FastMath.signum(dr1.get().getMargin() - dr2.get().getMargin());
+		else if (!dr2.isPresent())
+			return 1;
+
+		else
+			return (int) FastMath.signum(dr1.get().getExpectedGrossProfit() - dr2.get().getExpectedGrossProfit());
 	}
 
 }

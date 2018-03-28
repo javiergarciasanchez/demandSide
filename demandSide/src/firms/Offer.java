@@ -15,7 +15,7 @@ public class Offer {
 
 	private static int priceScale, qualityScale;
 	private static BigDecimal maxPrice, maxQuality;
-	private static BigDecimal priceStep, qualityStep;
+	private static BigDecimal qualityStep;
 	private static BigDecimal minDeltaPrice, minDeltaQuality;
 
 	private BigDecimal quality = BigDecimal.ZERO;
@@ -30,15 +30,6 @@ public class Offer {
 
 		setQuality(q);
 		setPrice(p);
-	}
-
-	public Offer(Optional<DecisionResult> dr) {
-
-		dr.ifPresent(d -> {
-			price = d.getPrice();
-			quality = d.getQuality();
-		});
-
 	}
 
 	public Offer(Offer offer) {
@@ -59,7 +50,6 @@ public class Offer {
 		maxPrice = BigDecimal.valueOf((Integer) GetParameter("maxPrice"));
 		maxQuality = BigDecimal.valueOf((Integer) GetParameter("maxQuality"));
 
-		priceStep = BigDecimal.valueOf((Double) GetParameter("priceStep"));
 		qualityStep = BigDecimal.valueOf((Double) GetParameter("qualityStep"));
 
 		minDeltaPrice = BigDecimal.ONE.movePointLeft(priceScale).setScale(priceScale);
@@ -231,10 +221,6 @@ public class Offer {
 
 	public static BigDecimal getQualityStep() {
 		return qualityStep;
-	}
-
-	public static BigDecimal getPriceStep() {
-		return priceStep;
 	}
 
 	public static int getPriceScale() {

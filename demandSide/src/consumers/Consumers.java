@@ -23,6 +23,8 @@ public class Consumers extends DefaultContext<Consumer> {
 	private static double maxMargUtilOfQuality;
 	private static double lambda;
 
+	private static double minExpectedDemand;
+
 	private static Pareto margUtilOfQualityDistrib;
 	private static Beta qualityDiscountDistrib;
 	private static int mktSize;
@@ -34,7 +36,8 @@ public class Consumers extends DefaultContext<Consumer> {
 		qualityDiscountDistrib = null;
 		double gini = (double) GetParameter("gini");
 		lambda = (1.0 + gini) / (2.0 * gini);
-		mktSize = (Integer) GetParameter("numberOfConsumers");
+		mktSize = (int) GetParameter("numberOfConsumers");
+		minExpectedDemand = (double) GetParameter("minimumExpectedDemand");
 	}
 
 	public Consumers() {
@@ -71,15 +74,22 @@ public class Consumers extends DefaultContext<Consumer> {
 		return qualityDiscountDistrib;
 	}
 
-	public static double getExpectedConsumersAbove(Double margUtilQuality) {
+	public static long getExpectedConsumersAbove(double margUtilQuality) {
 
 		if (margUtilQuality <= minMargUtilOfQuality)
 			return mktSize;
 		else if (margUtilQuality == Double.POSITIVE_INFINITY)
 			return 0;
 		else
-			return mktSize * FastMath.pow(minMargUtilOfQuality / margUtilQuality, lambda);
+			return Math.round(mktSize * FastMath.pow(minMargUtilOfQuality / margUtilQuality, lambda));
 
+	}
+
+	public long getConsumersAbove(double margUtilQuality) {
+		if (margUtilQuality == Double.POSITIVE_INFINITY)
+			return 0;
+		else
+			return this.stream().filter(c -> c.getMargUtilOfQuality() > margUtilQuality).count();
 	}
 
 	public static double getMinMargUtilOfQuality() {
@@ -106,9 +116,9 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static double expectedQuantity(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
+	public long getExpectedQuantityWExpecDistrib(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
 
-		double demandAboveLoLimit, demandAboveHiLimit;
+		long demandAboveLoLimit, demandAboveHiLimit;
 
 		demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(loOffer, Optional.of(segOffer)));
 		demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(Optional.of(segOffer), hiOffer));
@@ -120,34 +130,12 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static double expectedQuantity(Double p, Double q, Optional<Offer> loOf, Optional<Offer> hiOf) {
+	public long getExpectedQuantityWRealDistrib(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
 
-		assert ((p != null) && (q != null));
+		long demandAboveLoLimit, demandAboveHiLimit;
 
-		Double loP, loQ, hiP, hiQ;
-		double loLimit, hiLimit;
-		double demandAboveLoLimit, demandAboveHiLimit;
-
-		if (loOf.isPresent()) {
-			loP = loOf.get().getPrice().doubleValue();
-			loQ = loOf.get().getQuality().doubleValue();
-		} else {
-			loP = null;
-			loQ = null;
-		}
-		
-		loLimit = Offer.limit(loP, loQ, p, q);
-		demandAboveLoLimit = getExpectedConsumersAbove(loLimit);
-		
-		if (hiOf.isPresent()) {
-			hiP = hiOf.get().getPrice().doubleValue();
-			hiQ = hiOf.get().getQuality().doubleValue();
-		} else {
-			hiP = null;
-			hiQ = null;
-		}
-		hiLimit = Offer.limit(p, q, hiP, hiQ);
-		demandAboveHiLimit = getExpectedConsumersAbove(hiLimit);
+		demandAboveLoLimit = getConsumersAbove(Offer.limit(loOffer, Optional.of(segOffer)));
+		demandAboveHiLimit = getConsumersAbove(Offer.limit(Optional.of(segOffer), hiOffer));
 
 		if (demandAboveLoLimit > demandAboveHiLimit)
 			return demandAboveLoLimit - demandAboveHiLimit;
@@ -167,13 +155,25 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
 		/*
-		 * It is assumed poorest consumer has margUtil = minMargUtil As margUtil
-		 * > p/q p < minMargUtil * q
+		 * It is assumed poorest consumer has margUtil = minMargUtil As margUtil > p/q p
+		 * < minMargUtil * q
 		 */
 		BigDecimal minMargUtil = BigDecimal.valueOf(getMinMargUtilOfQuality());
 
 		return quality.multiply(minMargUtil).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
 
+	}
+
+	public static BigDecimal getMaxPriceToHaveMinimumExpectedDemand(BigDecimal perceivedQ, double knownByPerc) {
+
+		// The price is calculated for the firm with highest quality, i.e. with no
+		// competing firm from above.
+		// Other firms will have a lower max price, but as it cannot be calculated
+		// analytically the restriction is introduced in the numerical maximization
+		double maxP = minMargUtilOfQuality * perceivedQ.doubleValue()
+				* FastMath.pow(mktSize * knownByPerc / minExpectedDemand, 1.0 / lambda);
+
+		return BigDecimal.valueOf(maxP).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
 	}
 
 	public static double getLambda() {
@@ -182,6 +182,14 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static void setLambda(double lambda) {
 		Consumers.lambda = lambda;
+	}
+
+	public static double getMinExpectedDemand() {
+		return minExpectedDemand;
+	}
+
+	public static void setMinExpectedDemand(double minExpectedDemand) {
+		Consumers.minExpectedDemand = minExpectedDemand;
 	}
 
 }

@@ -13,6 +13,7 @@ public class RunPriority {
 	public static final double CHOOSE_FIRM_PRIORITY = 60;
 	public static final double NEXT_STEP_FIRM_PRIORITY = 50;
 	public static final double KILL_FIRMS_PRIORITY = 40;
+	public static final double UPDATE_STATISTICS = 30;
 	public static final double UPDATE_PROJECTIONS_PRIORITY = 10;
 	
 }

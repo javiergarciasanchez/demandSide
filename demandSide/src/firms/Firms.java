@@ -12,6 +12,7 @@ import firmTypes.NoQChangeFirm;
 import firmTypes.NoQIncreaseFirm;
 import firmTypes.NoQReductionFirm;
 import firmTypes.StandardFirm;
+
 import cern.jet.random.Gamma;
 import cern.jet.random.Uniform;
 
@@ -24,14 +25,33 @@ import repast.simphony.essentials.RepastEssentials;
 
 public class Firms extends DefaultContext<Firm> {
 
-	private static final int FIRM_TYPES = 4;
+	private static final int FIRM_TYPES = 5;
 
 	// Random distributions
 	private Uniform firmTypes;
 	private Gamma fixedCostDistrib;
 
 	// Parameters for Firms
-	double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
+	static double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
+	static int maxZeroDemand;
+
+	// Data Summarization
+	private class MarketStats {
+		private int totalDemand;
+		private double totalSales;
+
+		public void accumulate(Firm f) {
+			totalDemand += f.getDemand();
+			totalSales += f.getSales();
+		}
+
+		public void combine(MarketStats mktStats) {
+			totalDemand += mktStats.totalDemand;
+			totalSales += mktStats.totalSales;
+		}
+	}
+
+	private MarketStats marketStats;
 
 	// Theoretical market based on perceived quality and price
 	public TreeMap<BigDecimal, Firm> firmsByQ;
@@ -39,14 +59,19 @@ public class Firms extends DefaultContext<Firm> {
 	public Firms() {
 		super("Firms_Context");
 
+		createProbabilityDistrib();
+
+		createFirmLists();
+
+	}
+
+	public static void resetStaticVars() {
+
 		// Read parameters for all firms
 		initiallyKnownByPerc = (Double) GetParameter("initiallyKnownByPerc");
 		minimumProfit = (Double) GetParameter("minimumProfit");
 		diffusionSpeedParam = (Double) GetParameter("diffusionSpeedParam");
-
-		createProbabilityDistrib();
-
-		createFirmLists();
+		maxZeroDemand = (int) GetParameter("maxZeroDemand");
 
 	}
 
@@ -84,7 +109,7 @@ public class Firms extends DefaultContext<Firm> {
 
 	public void removeFromFirmLists(Firm f) {
 
-		firmsByQ.remove(f);
+		firmsByQ.remove(f.getQuality());
 
 	}
 
@@ -99,36 +124,49 @@ public class Firms extends DefaultContext<Firm> {
 			return;
 
 		for (int i = 1; i <= (Integer) GetParameter("potencialFirmsPerPeriod"); i++) {
-
-			switch (firmTypes.nextInt()) {
-			case 1:
-				new StandardFirm();
-				break;
-			case 2:
-				new NoQChangeFirm();
-				break;
-			case 3:
-				new NoQReductionFirm();
-				break;
-			case 4:
-				new IncreaseQFirm();
-				break;
-			case 5:
-				new NoQIncreaseFirm();
-				break;
-
-			}
+			createRandomTypeFirm();
 		}
+
+	}
+
+	private void createRandomTypeFirm() {
+		new StandardFirm();
+		return;
+
+/*
+		switch (firmTypes.nextInt()) {
+		case 1:
+			new StandardFirm();
+			break;
+		case 2:
+			new NoQChangeFirm();
+			break;
+		case 3:
+			new NoQReductionFirm();
+			break;
+		case 4:
+			new IncreaseQFirm();
+			break;
+		case 5:
+			new NoQIncreaseFirm();
+			break;
+		}
+*/
 
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.KILL_FIRMS_PRIORITY, interval = 1)
 	public void wipeDeadFirms() {
-		for (Firm f : Market.toBeKilled)
-			f.killFirm();
+
+		Market.toBeKilled.forEach(Firm::killFirm);
 
 		Market.toBeKilled.clear();
 
+	}
+
+	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_STATISTICS, interval = 1)
+	public void updateStatistics() {
+		marketStats = stream().collect(MarketStats::new, MarketStats::accumulate, MarketStats::combine);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -150,6 +188,14 @@ public class Firms extends DefaultContext<Firm> {
 
 		firmsColl.stream().filter(f -> (!f.equals(omitFirm))).forEach(f -> System.out.println("f" + f.getFirmNumID()
 				+ " " + f.getPrice() + " " + f.getQuality() + " " + f.getPerceivedQuality(f.getQuality())));
+	}
+
+	public int getTotalDemand() {
+		return marketStats.totalDemand;
+	}
+
+	public double getTotalSales() {
+		return marketStats.totalSales;
 	}
 
 }

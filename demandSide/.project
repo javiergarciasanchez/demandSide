@@ -34,4 +34,11 @@
 		<nature>repast.simphony.flowchart.repast_simphony_flowchart_nature</nature>
 		<nature>repast.simphony.statecharts.diagram.repast_simphony_statechart_nature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>repast.simphony.bin_and_src_2.5.0</name>
+			<type>2</type>
+			<location>C:/Program Files/RepastSimphony-2.5/eclipse/plugins/repast.simphony.bin_and_src_2.5.0</location>
+		</link>
+	</linkedResources>
 </projectDescription>

@@ -9,7 +9,7 @@ public class Neighbors {
 	private Optional<Firm> loF, hiF;
 	private BigDecimal loPriceLimit, hiPriceLimit;
 
-	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Optional<BigDecimal> prevPriceToBeExpelled)
+	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Optional<BigDecimal> maxPrice)
 			throws NoNeighbors {
 
 		loF = expMkt.getLowerFirmGivenQ(perceivedQ);
@@ -22,10 +22,10 @@ public class Neighbors {
 		expMkt.getPriceToExpel(perceivedQ, loF).ifPresent(p -> loPriceLimit = loPriceLimit.max(p));
 		expMkt.getPriceToExpel(perceivedQ, hiF).ifPresent(p -> loPriceLimit = loPriceLimit.max(p));
 
-		// Setting hiLimit. It is the minimum among max price to enter and price
-		// to expel previous firm
+		// Setting hiLimit. It is the minimum among max price to enter and max (price to
+		// expel previous firm or max price on the first call)
 		hiPriceLimit = ExpectedMarket.getMaxPriceToEnter(perceivedQ, loF, hiF);
-		prevPriceToBeExpelled.ifPresent(p -> hiPriceLimit = hiPriceLimit.min(p));		
+		maxPrice.ifPresent(p -> hiPriceLimit = hiPriceLimit.min(p));
 
 		if (loPriceLimit.compareTo(hiPriceLimit) >= 0)
 			throw new NoNeighbors();

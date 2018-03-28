@@ -4,24 +4,37 @@ import java.math.BigDecimal;
 
 public class OptimalPriceResult {
 	BigDecimal price = BigDecimal.ZERO;
-	double margin = 0.;
+	private double expectedGrossProfit = 0.;
+	private double expectedDemand = 0.;
 	
-	public OptimalPriceResult(BigDecimal price, double margin){
+	public void setExpectedDemand(double expectedDemand) {
+		this.expectedDemand = expectedDemand;
+	}
+
+	public OptimalPriceResult(BigDecimal price, double grossProfit){
 		this.price = price;
-		this.margin = margin;
+		this.expectedGrossProfit = grossProfit;
 		
 	}
 	
 	public String toString(){
-		return "Price: " + price + " - Margin: " + margin; 
+		return "Price: " + price + " - Gross Profit: " + expectedGrossProfit; 
 	}
 
 	public BigDecimal getPrice() {
 		return price;
 	}
 	
-	public double getMargin() {
-		return margin;
+	public double getExpectedGrossProfit() {
+		return expectedGrossProfit;
+	}
+	
+	public void setExpectedGrossProfit(double expectedGrossProfit) {
+		this.expectedGrossProfit = expectedGrossProfit;
+	}
+
+	public double getExpectedDemand() {
+		return expectedDemand;
 	}
 	
 }

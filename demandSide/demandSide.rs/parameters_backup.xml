@@ -103,7 +103,7 @@
 									
 		/>
 				<parameter name="potencialFirmsPerPeriod" displayName="Potencial Firms Per Period" type="int" 
-						defaultValue="3" 
+						defaultValue="1" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
