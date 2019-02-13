@@ -11,7 +11,7 @@ public class StandardFirm extends Firm {
 
 	public Stream<BigDecimal> getRealQualityOptions() {
 				
-		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();;		
+		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();
 		
 		BigDecimal currRealQ = getQuality();
 		
@@ -22,5 +22,9 @@ public class StandardFirm extends Firm {
 		return realQOpts.build().filter(op->op.isPresent()).map(Optional::get);
 		
 	}
-
+	
+	public FirmTypes getFirmType() {
+		return FirmTypes.STANDARD_FIRM;
+	}
+	
 }

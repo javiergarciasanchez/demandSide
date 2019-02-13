@@ -10,7 +10,7 @@ public class Neighbors {
 	private BigDecimal loPriceLimit, hiPriceLimit;
 
 	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Optional<BigDecimal> maxPrice)
-			throws NoNeighbors {
+			throws NoMarketSegmentForFirm {
 
 		loF = expMkt.getLowerFirmGivenQ(perceivedQ);
 		hiF = expMkt.getHigherFirmGivenQ(perceivedQ);
@@ -28,7 +28,7 @@ public class Neighbors {
 		maxPrice.ifPresent(p -> hiPriceLimit = hiPriceLimit.min(p));
 
 		if (loPriceLimit.compareTo(hiPriceLimit) >= 0)
-			throw new NoNeighbors();
+			throw new NoMarketSegmentForFirm();
 
 	}
 

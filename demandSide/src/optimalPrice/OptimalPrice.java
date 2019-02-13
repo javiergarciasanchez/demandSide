@@ -40,17 +40,16 @@ public class OptimalPrice {
 		});
 
 		// Get first optimal price (ie without expelling any neighbor
-		// if there are no neighbors there is no price
 		try {
 			currNeighbors = new Neighbors(expMkt, perceivedQ, minPrice, Optional.of(maxPrice));
-		} catch (NoNeighbors e) {
+		} catch (NoMarketSegmentForFirm e) {
 			return Optional.empty();
 		}
 		returnResult = getSegmentOptimalResult(perceivedQ, cost, knownByPerc, currNeighbors);
 
 		// Note that a neighbor that is expelled with any price has an empty
 		// priceToBeExpelled
-		// They are take out of the iterator
+		// They are taken out of the iterator
 		Iterator<ToBeExpelled> itToBeExpelled;
 		itToBeExpelled = expMkt.stream().map(new AddPriceToBeExpelled(expMkt, perceivedQ))
 				.filter(toBeExp -> toBeExp.optPriceToBeExpelled.isPresent())
@@ -67,12 +66,12 @@ public class OptimalPrice {
 
 			try {
 				currNeighbors = new Neighbors(expMkt, perceivedQ, minPrice, prevPriceToBeExpelled);
-			} catch (NoNeighbors e) {
+			} catch (NoMarketSegmentForFirm e) {
 				continue;
 			}
 
 			OptimalPriceResult tempResult = getSegmentOptimalResult(perceivedQ, cost, knownByPerc, currNeighbors);
-			if (tempResult.getExpectedGrossProfit() > returnResult.getExpectedGrossProfit())
+			if (tempResult.expInf.grossProfit > returnResult.expInf.grossProfit)
 				returnResult = tempResult;
 
 		}
@@ -86,19 +85,23 @@ public class OptimalPrice {
 
 		assert currNeighbors.getLoPriceLimit().compareTo(currNeighbors.getHiPriceLimit()) < 0;
 
-		OptimalPriceResult result = new OptimalPriceResult(BigDecimal.ZERO, 0);
+		OptimalPriceResult result = new OptimalPriceResult();
 
 		result.price = getSegmentOptimalPrice(perceivedQ, cost, knownByPerc, currNeighbors);
 
 		Optional<Offer> loOffer = currNeighbors.getLoF().map(Firm::getPerceivedOffer);
 		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
 
-		result.setExpectedDemand(
-				Market.consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ), loOffer, hiOffer)
-						* knownByPerc);
-
-		result.setExpectedGrossProfit(result.getExpectedDemand() * (result.price.doubleValue() - cost));
-
+		// Collect expected data
+		result.expInf.demand = Market.consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ),
+				loOffer, hiOffer) * knownByPerc;
+		result.expInf.grossProfit = result.expInf.demand * (result.price.doubleValue() - cost);
+		
+		// Collect
+		Optional<Offer> currOf = Optional.of(new Offer(result.price, perceivedQ));
+		result.expInf.loLimit = Offer.limit(loOffer, currOf);
+		result.expInf.hiLimit = Offer.limit(currOf, hiOffer);		
+		
 		return result;
 
 	}

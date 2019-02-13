@@ -13,9 +13,9 @@ import consumers.Consumer;
 import consumers.Consumers;
 import demandSide.Market;
 import demandSide.RunPriority;
+import firmTypes.FirmTypes;
 import graphs.Scale;
 import optimalPrice.OptimalPrice;
-import optimalPrice.OptimalPriceResult;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.essentials.RepastEssentials;
 import repast.simphony.random.RandomHelper;
@@ -42,7 +42,7 @@ public abstract class Firm {
 	protected static long firmIDCounter;
 
 	private long firmIntID = firmIDCounter++;
-	private String ID = "Firm " + firmIntID;
+	private String ID = "Firm_" + firmIntID;
 
 	public static void resetStaticVars() {
 		// resets static variables
@@ -79,11 +79,10 @@ public abstract class Firm {
 			// There is no available quality
 			return false;
 
-		Optional<OptimalPriceResult> optPriceResult = getOptimalPriceResultGivenRealQ(realQ);
+		Optional<Decision> optPriceDecision = getOptPriceDecision(realQ);
+		optPriceDecision.ifPresent(opd -> setNewDecision(opd));
 
-		optPriceResult.ifPresent(opr -> setNewDecision(opr, realQ));
-
-		return optPriceResult.isPresent();
+		return optPriceDecision.isPresent();
 
 	}
 
@@ -103,14 +102,35 @@ public abstract class Firm {
 
 	}
 
-	private void setNewDecision(OptimalPriceResult optPR, BigDecimal q) {
-		decision = new Decision(optPR, q);
+	private void setNewDecision(Decision d) {
+		decision = d;
 		Market.firms.addToFirmLists(this);
 		initializeConsumerKnowledge();
 	}
 
+	@ScheduledMethod(start = 1, priority = RunPriority.RESET_DEMAND_PRIORITY, interval = 1)
+	public void resetDemand() {
+		demand = 0;
+	}
+
+	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1, shuffle = true)
+	public void makeOffer() {
+
+		// if there is no decision it will keep previous one
+		getRealQualityOptions().map(q -> getOptPriceDecision(q)).max(new DecisionComparator())
+				.ifPresent(this::updateDecision);
+
+	}
+
+	public abstract Stream<BigDecimal> getRealQualityOptions();
+
+	public abstract FirmTypes getFirmType();
+
 	/*
-	 * Gets the price that maximizes profit given quality.
+	 * Gets the optimal decision given real q
+	 * 
+	 * it calculates price that maximizes profit given quality. Then it packs all in
+	 * a decision
 	 * 
 	 * Profit depends on quantity which depends on who are the neighbors. Thus
 	 * depending which competitors are expelled, we have different profit functions.
@@ -123,38 +143,19 @@ public abstract class Firm {
 	 * The different set of competitors are determined by reducing price. The lower
 	 * the price the more competitors are expelled The lowest meaningful price is
 	 * marginal cost
+	 * 
+	 * Decision includes expected demand and expected Gross Profit
 	 */
-	private Optional<OptimalPriceResult> getOptimalPriceResultGivenRealQ(BigDecimal q) {
 
-		BigDecimal perceivedQ = getPerceivedQuality(q);
-		double cost = getUnitCost(q);
-
-		return OptimalPrice.get(perceivedQ, cost, getKnownByPerc(), new ExpectedMarket(this));
-
-	}
-
-	@ScheduledMethod(start = 1, priority = RunPriority.RESET_DEMAND_PRIORITY, interval = 1)
-	public void resetDemand() {
-		demand = 0;
-	}
-
-	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1, shuffle = true)
-	public void makeOffer() {
+	private Optional<Decision> getOptPriceDecision(BigDecimal realQ) {
 
 		ExpectedMarket expMkt = new ExpectedMarket(this);
 
-		// if there is no decision it will keep previous one
-		getRealQualityOptions().map(q -> getOptPriceDecision(q, expMkt)).max(new DecisionComparator())
-				.ifPresent(this::updateDecision);
+		Optional<Decision> opd = OptimalPrice
+				.get(getPerceivedQuality(realQ), getUnitCost(realQ), getKnownByPerc(), expMkt)
+				.map(opr -> new Decision(opr, realQ));
 
-	}
-
-	public abstract Stream<BigDecimal> getRealQualityOptions();
-
-	private Optional<Decision> getOptPriceDecision(BigDecimal realQ, ExpectedMarket expMkt) {
-
-		return OptimalPrice.get(getPerceivedQuality(realQ), getUnitCost(realQ), getKnownByPerc(), expMkt)
-				.map(r -> new Decision(r, realQ));
+		return opd;
 
 	}
 
@@ -364,11 +365,19 @@ public abstract class Firm {
 	}
 
 	public double getExpectedDemand() {
-		return decision.getExpectedDemand();
+		return decision.expInf.demand;
 	}
 
 	public double getExpectedGrossProfit() {
-		return decision.getExpectedGrossProfit();
+		return decision.expInf.grossProfit;
+	}
+	
+	public double getExpectedLowLimit() {
+		return decision.expInf.loLimit;
+	}
+
+	public double getExpectedHighLimit() {
+		return decision.expInf.hiLimit;
 	}
 
 	public Offer getOffer() {
@@ -395,13 +404,8 @@ public abstract class Firm {
 		return RepastEssentials.GetTickCount() - born;
 	}
 
-	public String getFirmType() {
-		return "Firm";
-		// return getClass().toString().substring(16, 17);
-	}
-
 	public String getFirmID() {
-		return getFirmType() + " " + getFirmNumID();
+		return ID;
 	}
 
 	public long getFirmIntID() {
@@ -447,7 +451,7 @@ public abstract class Firm {
 	public double getMargin() {
 		return getProfit() / getSales();
 	}
-	
+
 	public double getDemandShare() {
 		return (double) getDemand() / Market.firms.getTotalDemand();
 	}
@@ -457,7 +461,7 @@ public abstract class Firm {
 	}
 
 	public String toString() {
-		return ID;
+		return getFirmType().toString() + "_" + getFirmIntID();
 	}
 
 }

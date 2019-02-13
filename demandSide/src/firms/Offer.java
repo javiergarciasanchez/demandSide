@@ -99,7 +99,9 @@ public class Offer {
 	 * Calculates the marginal utility of quality that divides consumer
 	 * preferences. Consumers with a marginal utility of quality (muq) below
 	 * "limit" will choose loOffer, while the ones with higher (muq) would
-	 * choose hiOffer When there is no limit, ie hiOf demand is zero, function
+	 * choose hiOffer
+	 * 
+	 * When there is no limit, ie hiOf demand is zero, function
 	 * returns null
 	 */
 	public static double limit(Optional<Offer> loOf, Optional<Offer> hiOf) {
@@ -130,7 +132,7 @@ public class Offer {
 			return Consumers.getMinMargUtilOfQuality();
 
 		else if (loQ.compareTo(hiQ) == 0) {
-			// loP < hiP, no consumer would choose higher offer
+			// as loP < hiP, no consumer would choose higher offer
 			return Double.POSITIVE_INFINITY;
 
 		} else {

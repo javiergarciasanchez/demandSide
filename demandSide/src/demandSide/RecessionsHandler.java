@@ -24,21 +24,21 @@ public class RecessionsHandler {
 		String[] tmp = ((String) GetParameter("recessionStart")).split(":");
 		start = new double[tmp.length];
 		for (int i = 0; i < tmp.length; i++) {
-			start[i] = new Double(tmp[i]);
+			start[i] = Double.valueOf(tmp[i]);
 		}
 
 		// Read Duration of recessions
 		tmp = ((String) GetParameter("recessionDuration")).split(":");
 		dur = new double[tmp.length];
 		for (int i = 0; i < tmp.length; i++) {
-			dur[i] = new Double(tmp[i]);
+			dur[i] = Double.valueOf(tmp[i]);
 		}
 
 		// Read magnitude of recessions
 		tmp = ((String) GetParameter("recessionMagnitude")).split(":");
 		recesMag = new double[tmp.length];
 		for (int i = 0; i < tmp.length; i++) {
-			recesMag[i] = new Double(tmp[i]);
+			recesMag[i] = Double.valueOf(tmp[i]);
 		}
 
 		// Schedule recessions

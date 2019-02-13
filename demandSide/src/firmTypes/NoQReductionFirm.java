@@ -11,7 +11,7 @@ public class NoQReductionFirm extends Firm {
 
 	public Stream<BigDecimal> getRealQualityOptions() {
 		
-		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();;		
+		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();
 		
 		BigDecimal currRealQ = getQuality();
 		
@@ -21,5 +21,9 @@ public class NoQReductionFirm extends Firm {
 		return realQOpts.build().filter(op->op.isPresent()).map(Optional::get);
 		
 	}
-
+		
+	public FirmTypes getFirmType() {
+		return FirmTypes.NO_Q_REDUCTION_FIRM;
+	}
+	
 }

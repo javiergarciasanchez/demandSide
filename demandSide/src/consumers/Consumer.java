@@ -3,6 +3,9 @@ package consumers;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.lang.Double;
+import java.lang.Long;
+import java.lang.String;
 
 import org.apache.commons.math3.util.FastMath;
 

@@ -16,5 +16,9 @@ public class NoQChangeFirm extends Firm {
 		return realQOpts.build();		
 		
 	}
+		
+	public FirmTypes getFirmType() {
+		return FirmTypes.NO_Q_CHANGE_FIRM;
+	}
 
 }

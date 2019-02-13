@@ -7,11 +7,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import demandSide.Market;
 import demandSide.RunPriority;
-import firmTypes.IncreaseQFirm;
-import firmTypes.NoQChangeFirm;
-import firmTypes.NoQIncreaseFirm;
-import firmTypes.NoQReductionFirm;
-import firmTypes.StandardFirm;
+import firmTypes.FirmTypes;
 
 import cern.jet.random.Gamma;
 import cern.jet.random.Uniform;
@@ -25,10 +21,8 @@ import repast.simphony.essentials.RepastEssentials;
 
 public class Firms extends DefaultContext<Firm> {
 
-	private static final int FIRM_TYPES = 5;
-
 	// Random distributions
-	private Uniform firmTypes;
+	public Uniform firmTypes;
 	private Gamma fixedCostDistrib;
 
 	// Parameters for Firms
@@ -86,7 +80,7 @@ public class Firms extends DefaultContext<Firm> {
 		lamda = alfa / mean;
 		fixedCostDistrib = RandomHelper.createGamma(alfa, lamda);
 
-		firmTypes = RandomHelper.createUniform(1, FIRM_TYPES);
+		firmTypes = RandomHelper.createUniform(1, FirmTypes.values().length);
 
 	}
 
@@ -130,28 +124,12 @@ public class Firms extends DefaultContext<Firm> {
 	}
 
 	private void createRandomTypeFirm() {
-		new StandardFirm();
-		return;
 
-/*
-		switch (firmTypes.nextInt()) {
-		case 1:
-			new StandardFirm();
-			break;
-		case 2:
-			new NoQChangeFirm();
-			break;
-		case 3:
-			new NoQReductionFirm();
-			break;
-		case 4:
-			new IncreaseQFirm();
-			break;
-		case 5:
-			new NoQIncreaseFirm();
-			break;
-		}
-*/
+		// Create a firm of random type
+//		FirmTypes.createRandomTypeFirm();
+
+		// Temporarily fixed the type
+		FirmTypes.STANDARD_FIRM.createFirm();
 
 	}
 

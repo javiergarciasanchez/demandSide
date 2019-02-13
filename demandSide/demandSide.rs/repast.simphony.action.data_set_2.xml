@@ -1,4 +1,4 @@
-<repast.simphony.data2.engine.DataSetDescriptor simphonyVersion="2.5.0">
+<repast.simphony.data2.engine.DataSetDescriptor simphonyVersion="2.6.0">
   <name>Firms</name>
   <type>NON_AGGREGATE</type>
   <sourceType>firms.Firm</sourceType>
@@ -182,6 +182,22 @@
         <id>DemandShare</id>
         <className>firms.Firm</className>
         <methodName>getDemandShare</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>ExpectedLowLimit</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>ExpectedLowLimit</id>
+        <className>firms.Firm</className>
+        <methodName>getExpectedLowLimit</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>ExpectedHighLimit</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>ExpectedHighLimit</id>
+        <className>firms.Firm</className>
+        <methodName>getExpectedHighLimit</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
   </methodDataSources>

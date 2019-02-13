@@ -11,7 +11,7 @@ public class NoQIncreaseFirm extends Firm {
 
 	public Stream<BigDecimal> getRealQualityOptions() {
 		
-		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();;		
+		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();
 		
 		BigDecimal currRealQ = getQuality();
 		
@@ -22,4 +22,9 @@ public class NoQIncreaseFirm extends Firm {
 		
 	}
 
+	
+	public FirmTypes getFirmType() {
+		return FirmTypes.NO_Q_INCREASE_FIRM;
+	}
+	
 }

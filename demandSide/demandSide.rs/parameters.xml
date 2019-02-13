@@ -43,7 +43,7 @@
 									
 		/>
 				<parameter name="qualityDiscountMostLikely" displayName="Quality Discount: Most Likely value" type="double" 
-						defaultValue="0.999" 
+						defaultValue="0.9999" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									
@@ -103,7 +103,7 @@
 									
 		/>
 				<parameter name="potencialFirmsPerPeriod" displayName="Potencial Firms Per Period" type="int" 
-						defaultValue="3" 
+						defaultValue="1" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
@@ -151,7 +151,7 @@
 									
 		/>
 				<parameter name="qualityDiscountMean" displayName="Quality Discount: Mean" type="double" 
-						defaultValue="0.998" 
+						defaultValue="0.9998" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									

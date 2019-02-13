@@ -24,11 +24,11 @@ SET CP=%CP%;%REPAST_SIMPHONY_LIB%log4j-1.2.16.jar
 SET CP=%CP%;%REPAST_SIMPHONY_LIB%xpp3_min-1.1.4c.jar
 SET CP=%CP%;%REPAST_SIMPHONY_LIB%xstream-1.4.7.jar
 SET CP=%CP%;%REPAST_SIMPHONY_LIB%xmlpull-1.1.3.1.jar
-SET CP=%CP%;%REPAST_SIMPHONY_LIB%commons-cli-1.2.jar
+SET CP=%CP%;%REPAST_SIMPHONY_LIB%commons-cli-1.3.1.jar
 SET CP=%CP%;../groovylib/$Groovy_All_Jar
 
 REM Change to the Default Repast Simphony Directory
 CD demandSide
 
 REM Start the Model
-START javaw -Xss10M -Xmx400M -cp %CP% repast.simphony.runtime.RepastMain ./demandSide.rs
+START javaw -XX:+IgnoreUnrecognizedVMOptions --add-modules=ALL-SYSTEM --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED -cp %CP% repast.simphony.runtime.RepastMain ./demandSide.rs
