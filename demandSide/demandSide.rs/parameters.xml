@@ -156,7 +156,7 @@
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									
 		/>
-				<parameter name="minMargUtilOfQuality" displayName="Minimum of Marginal Utility of Quality" type="double" 
+				<parameter name="minWelfareParam" displayName="Minimum of Welfare Parameter" type="double" 
 						defaultValue="0.1" 
 						isReadOnly="true" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"

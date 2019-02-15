@@ -10,7 +10,6 @@ import java.lang.String;
 import org.apache.commons.math3.util.FastMath;
 
 import firms.Firm;
-import firms.Offer;
 import demandSide.Market;
 import demandSide.RecessionsHandler;
 import demandSide.RunPriority;
@@ -18,7 +17,7 @@ import repast.simphony.engine.schedule.ScheduledMethod;
 
 public class Consumer {
 
-	private double margUtilOfQuality;
+	private double rawWelfareParam;
 	private double qualityDiscount;
 	private Optional<Firm> chosenFirm;
 
@@ -53,20 +52,18 @@ public class Consumer {
 
 		// We need to introduce randomness
 
-		setMargUtilOfQuality();
+		setRawWelfareParam();
 
 		setQualityDiscount();
 
 	}
 
-	private void setMargUtilOfQuality() {
+	private void setRawWelfareParam() {
 
-		// There is no need to introduce a marginal utility of money
-		// because it is implicit in the marginal utility of quality
-		margUtilOfQuality = Consumers.getMargUtilOfQualityDistrib().nextDouble();
+		rawWelfareParam = Consumers.getWelfareParamDistrib().nextDouble();
 
-		// Upper limit is unbounded. The max marg utility is updated
-		Consumers.setMaxMargUtilOfQuality(FastMath.max(Consumers.getMaxMargUtilOfQuality(), margUtilOfQuality));
+		// Upper limit is unbounded. The max welfare parameter is updated
+		Consumers.setRawMaxWelfareParam(FastMath.max(Consumers.getRawMaxWelfareParam(), rawWelfareParam));
 
 	}
 
@@ -114,8 +111,6 @@ public class Consumer {
 		return (knownFirmsQualityFactor.get(f) != 1.0);
 	}
 
-	// @ScheduledMethod(start = 1, priority =
-	// RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
 	public void updateProjections() {
 		Market.consumersProjection.update(this);
 		Market.margUtilProjection.update(this);
@@ -123,7 +118,7 @@ public class Consumer {
 	}
 
 	// Returns the firm from the known firms that maximizes utility
-	// if no firm is chosen returns null (all utilities are below 0)
+	// if no firm is chosen returns empty (all utilities are below 0)
 	private Optional<Firm> chooseMaximizingFirm() {
 
 		double maxUtility = 0;
@@ -139,21 +134,25 @@ public class Consumer {
 			}
 		}
 
-		// if no firm was chosen maxUtilFirm would be null
+		// if no firm was chosen maxUtilFirm would be empty
 		return maxUtilFirm;
 
 	}
 
 	private double expectedUtility(Firm f, double qualityFactor) {
-		Offer o = f.getOffer();
-		return getMargUtilOfQuality() * o.getQuality().doubleValue() * qualityFactor - o.getPrice().doubleValue();
+
+		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
+
+		return UtilityFunction.expectedUtility(welfareParam, f.getOffer(), qualityFactor);
 	}
 
 	private double realUtility(Firm f, double qualityFactor) {
-		Offer o = f.getOffer();
-		return getMargUtilOfQuality() * o.getQuality().doubleValue() - o.getPrice().doubleValue();
-	}
 
+		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
+
+		return UtilityFunction.realUtility(welfareParam, f.getOffer());
+	}
+	
 	public void removeTraceOfFirm(Firm firm) {
 		knownFirmsQualityFactor.remove(firm);
 
@@ -164,14 +163,18 @@ public class Consumer {
 
 	}
 
-	public double getMargUtilOfQuality() {
-		double recessionImpact = 1 - RecessionsHandler.getRecesMagnitude();
-		return margUtilOfQuality * recessionImpact;
+	public double getRawWelfareParam() {
+		return rawWelfareParam;
 	}
 
+	
 	//
 	// Procedures for inspecting values
 	//
+	public double getWelfareParam() {
+		return RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
+	}
+
 	public Optional<Firm> getChosenFirm() {
 		return chosenFirm;
 	}
@@ -184,12 +187,12 @@ public class Consumer {
 		return chosenFirm.map(Firm::getFirmIntID).orElse((long) 0);
 	}
 
-	public double getRealUtility() {
-		return chosenFirm.map(f -> realUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
-	}
-
 	public double getExpectedUtility() {
 		return chosenFirm.map(f -> expectedUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
+	}
+
+	public double getRealUtility() {
+		return chosenFirm.map(f -> realUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
 	}
 
 	public double getConsumerIntID() {

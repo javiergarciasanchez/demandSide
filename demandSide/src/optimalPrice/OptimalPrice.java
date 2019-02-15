@@ -14,7 +14,7 @@ import org.apache.commons.math3.optim.univariate.SearchInterval;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import consumers.Consumers;
-import demandSide.Market;
+import consumers.UtilityFunction;
 import firms.Firm;
 import firms.Offer;
 import firms.ExpectedMarket;
@@ -28,7 +28,7 @@ public class OptimalPrice {
 		OptimalPriceResult returnResult = null;
 
 		BigDecimal minPrice = Offer.getMinPrice(cost, perceivedQ);
-		BigDecimal maxPrice = Consumers.getMaxPriceToHaveMinimumExpectedDemand(perceivedQ, knownByPerc);
+		BigDecimal maxPrice = UtilityFunction.getMaxPriceToHaveMinimumExpectedDemand(perceivedQ, knownByPerc);
 
 		// Remove firms that have price to expel higher than maxprice
 		expMkt.removeIf(f -> {
@@ -93,14 +93,14 @@ public class OptimalPrice {
 		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
 
 		// Collect expected data
-		result.expInf.demand = Market.consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ),
+		result.expInf.demand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ),
 				loOffer, hiOffer) * knownByPerc;
 		result.expInf.grossProfit = result.expInf.demand * (result.price.doubleValue() - cost);
 		
 		// Collect
 		Optional<Offer> currOf = Optional.of(new Offer(result.price, perceivedQ));
-		result.expInf.loLimit = Offer.limit(loOffer, currOf);
-		result.expInf.hiLimit = Offer.limit(currOf, hiOffer);		
+		result.expInf.loLimit = Consumers.limitingWelfareParamPerceivedByFirms(loOffer, currOf);
+		result.expInf.hiLimit = Consumers.limitingWelfareParamPerceivedByFirms(currOf, hiOffer);		
 		
 		return result;
 
@@ -130,14 +130,18 @@ public class OptimalPrice {
 
 		BrentOptimizer optim = new BrentOptimizer(rel, abs);
 
-		MaxEval maxEval = new MaxEval(100);
-		MaxIter maxIter = new MaxIter(100);
+		MaxEval maxEval = new MaxEval(1000);
+		MaxIter maxIter = new MaxIter(1000);
 
 		try {
 			UnivariatePointValuePair optimRetval = optim.optimize(
 					new SearchInterval(loPriceLimit.doubleValue(), hiPriceLimit.doubleValue()), GoalType.MAXIMIZE,
 					new UnivariateObjectiveFunction(expectedGrossProfitForMaxim), maxIter, maxEval);
-			retval = BigDecimal.valueOf(optimRetval.getPoint());
+			
+			double optPrice = optimRetval.getPoint();
+			assert (loPriceLimit.doubleValue() <= optPrice) && ( optPrice <= hiPriceLimit.doubleValue());
+			
+			retval = BigDecimal.valueOf(optPrice);
 
 		} catch (TooManyEvaluationsException e) {
 			// it should return best value obtained, but we don't have it

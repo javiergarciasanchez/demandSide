@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
 import consumers.Consumers;
-import demandSide.Market;
 import firms.Offer;
 
 public class ExpectedGrossProfitForMaximization implements UnivariateFunction {
@@ -27,7 +26,7 @@ public class ExpectedGrossProfitForMaximization implements UnivariateFunction {
 
 	@Override
 	public double value(double p) {
-		double expDemand = Market.consumers.getExpectedQuantityWExpecDistrib(new Offer(p, q), loOffer, hiOffer) * knownByPerc;
+		double expDemand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(p, q), loOffer, hiOffer) * knownByPerc;
 
 		// In order to choose a price where expected demand is higher than minExpDemand
 		// we set margin to zero when expected demand is below min

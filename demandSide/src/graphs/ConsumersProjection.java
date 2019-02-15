@@ -7,6 +7,7 @@ import org.apache.commons.math3.util.FastMath;
 import consumers.Consumer;
 import consumers.Consumers;
 import consumers.Pareto;
+import demandSide.RecessionsHandler;
 import repast.simphony.context.space.continuous.ContextSpace;
 import repast.simphony.space.continuous.ContinuousSpace;
 import repast.simphony.space.continuous.SimpleCartesianAdder;
@@ -31,7 +32,7 @@ public class ConsumersProjection {
 	}
 
 	public void update(Consumer c) {
-		space.moveTo(c, margUtilToCoord(c.getMargUtilOfQuality()), MAX_Y / 2.0);
+		space.moveTo(c, margUtilToCoord(c.getRawWelfareParam()), MAX_Y / 2.0);
 	}
 
 	private double margUtilToCoord(double margUtilOfQuality) {
@@ -46,7 +47,7 @@ public class ConsumersProjection {
 		double gini = (double) GetParameter("gini");
 		double lambda = (1.0 + gini) / (2.0 * gini);
 
-		double minimum = Consumers.getMinMargUtilOfQuality();
+		double minimum = RecessionsHandler.getMinWelfareParamPerceivedByFirms();
 
 		return Pareto.inversePareto(acumProb, minimum, lambda);
 	}

@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumer;
-import consumers.Consumers;
 import consumers.Pareto;
+import demandSide.RecessionsHandler;
 import firms.Firm;
 import repast.simphony.context.Context;
 import repast.simphony.context.space.grid.ContextGrid;
@@ -39,7 +39,7 @@ public class MargUtilProjection {
 	}
 
 	public void update(Consumer c) {
-		int x = margUtilToCoord(c.getMargUtilOfQuality());
+		int x = margUtilToCoord(c.getRawWelfareParam());
 		space.moveTo(c, x, getFreeY(x, FIRMS_HEIGHT + SEGMENT_LIMITS_HEIGHT, 1));
 
 	}
@@ -69,7 +69,7 @@ public class MargUtilProjection {
 		double gini = (double) GetParameter("gini");
 		double lambda = (1.0 + gini) / (2.0 * gini);
 
-		double minimum = Consumers.getMinMargUtilOfQuality();
+		double minimum = RecessionsHandler.getMinWelfareParamPerceivedByFirms();
 
 		return Pareto.inversePareto(acumProb, minimum, lambda);
 	}

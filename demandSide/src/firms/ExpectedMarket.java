@@ -7,6 +7,8 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import consumers.Consumers;
+import consumers.UtilityFunction;
 import demandSide.Market;
 
 public class ExpectedMarket extends TreeSet<Firm> {
@@ -51,26 +53,27 @@ public class ExpectedMarket extends TreeSet<Firm> {
 		
 	}
 
-	private Optional<Offer> getLoOffer(Firm f) {
-		return Optional.ofNullable(lower(f)).map(lo -> lo.getPerceivedOffer());
-	}
-
-	private Optional<Offer> getHiOffer(Firm f) {
-		return Optional.ofNullable(higher(f)).map(hi -> hi.getPerceivedOffer());
-	}
-
 	private double getLoLimit(Firm f) {
-		return Offer.limit(getLoOffer(f), Optional.of(f.getPerceivedOffer()));
+		
+		Optional<Offer> loOf = Optional.ofNullable(lower(f)).map(lo -> lo.getPerceivedOffer());
+		Optional<Offer> of = Optional.of(f.getPerceivedOffer());
+		
+		return Consumers.limitingWelfareParamPerceivedByFirms(loOf, of);
 	}
 
 	private double getHiLimit(Firm f) {
-		return Offer.limit(Optional.of(f.getPerceivedOffer()), getHiOffer(f));
+		
+		Optional<Offer> hiOf = Optional.ofNullable(higher(f)).map(hi -> hi.getPerceivedOffer());
+		Optional<Offer> of = Optional.of(f.getPerceivedOffer());
+		
+		return Consumers.limitingWelfareParamPerceivedByFirms(of, hiOf);
 	}
 
 	public Optional<Firm> getLowerFirmGivenQ(BigDecimal perceivedQ) {
 
 		// The reduce operation is to get the highest element of the ones that
 		// have lower perceived q
+		// This is the last element because the tree is ordered
 		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) <= 0).reduce((a, b) -> b);
 
 	}
@@ -101,59 +104,18 @@ public class ExpectedMarket extends TreeSet<Firm> {
 		BigDecimal retval;
 
 		if (q.compareTo(firmPerceivedQ) == 0)
+			// Any price below f's price expels f
 			retval = f.getPrice();
 
-		else if (firmPerceivedQ.compareTo(q) < 0) {
-			// price + loLimit * (q - percQ)
-			if (getLoLimit(f) == Double.POSITIVE_INFINITY)
-				// Any price expels f
-				return Optional.empty();
-			else
-				retval = f.getPrice().add(BigDecimal.valueOf(getLoLimit(f)).multiply(q.subtract(firmPerceivedQ)));
-		} else {
-			// price - hiLimit * (percQ - q)
-			if (getHiLimit(f) == Double.POSITIVE_INFINITY)
-				// No price expels f
-				retval = BigDecimal.ZERO;
-			else
-				retval = f.getPrice().subtract(BigDecimal.valueOf(getHiLimit(f)).multiply(firmPerceivedQ.subtract(q)));
-		}
+		else if (q.compareTo(firmPerceivedQ) > 0)
+			
+			retval = UtilityFunction.priceToExpelFromAbove(q, f, Optional.ofNullable(lower(f)));
+		
+		else
+			retval = UtilityFunction.priceToExpelFromBelow(q, f, Optional.ofNullable(higher(f)));		
 
 		// It rounds downward to make sure the price returned would expel f
 		return Optional.of(retval.setScale(Offer.getPriceScale(), RoundingMode.FLOOR));
-	}
-
-	public static BigDecimal getMaxPriceToEnter(BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
-
-		BigDecimal loP, loQ, hiP, hiQ;
-
-		if (!hiF.isPresent())
-			return Offer.getMaxPrice();
-
-		// note that null will never be assigned because hiF is present
-		hiP = hiF.map(Firm::getPrice).orElse(null);
-		hiQ = hiF.map(Firm::getQuality).orElse(null);
-
-		loP = loF.map(Firm::getPrice).orElse(BigDecimal.ZERO);
-		loQ = loF.map(Firm::getPerceivedQuality).orElse(BigDecimal.ZERO);
-
-		if (hiQ.compareTo(loQ) <= 0)
-			return BigDecimal.ZERO;
-		else
-
-		{
-
-			// maxPrice = (hiP * (percQ - loQ) + loP * (hiQ - percQ)) / (hiQ -
-			// loQ)
-			BigDecimal num1 = hiP.multiply(perceivedQ.subtract(loQ));
-			BigDecimal num2 = loP.multiply(hiQ.subtract(perceivedQ));
-			BigDecimal num = num1.add(num2);
-			BigDecimal denom = hiQ.subtract(loQ);
-
-			// It rounds downward to make sure firm would enter
-			return num.divide(denom, Offer.getPriceScale(), RoundingMode.FLOOR);
-		}
-
 	}
 
 }

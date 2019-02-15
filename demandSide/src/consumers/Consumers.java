@@ -3,12 +3,12 @@ package consumers;
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
 
 import cern.jet.random.Beta;
+import demandSide.RecessionsHandler;
 import firms.Offer;
 import repast.simphony.context.DefaultContext;
 import repast.simphony.random.RandomHelper;
@@ -19,20 +19,20 @@ public class Consumers extends DefaultContext<Consumer> {
 	// This variables are static to access them easily
 	// Are initialized in constructor without problem because
 	// only one instance is always created
-	private static double minMargUtilOfQuality;
-	private static double maxMargUtilOfQuality;
+	private static double rawMinWelfareParam;
+	private static double rawMaxWelfareParam;
 	private static double lambda;
 
 	private static double minExpectedDemand;
 
-	private static Pareto margUtilOfQualityDistrib;
+	private static Pareto welfareParamDistrib;
 	private static Beta qualityDiscountDistrib;
 	private static int mktSize;
 
 	public static void resetStaticVars() {
-		minMargUtilOfQuality = 0.0;
-		maxMargUtilOfQuality = 0.0;
-		margUtilOfQualityDistrib = null;
+		rawMinWelfareParam = 0.0;
+		rawMaxWelfareParam = 0.0;
+		welfareParamDistrib = null;
 		qualityDiscountDistrib = null;
 		double gini = (double) GetParameter("gini");
 		lambda = (1.0 + gini) / (2.0 * gini);
@@ -43,10 +43,10 @@ public class Consumers extends DefaultContext<Consumer> {
 	public Consumers() {
 		super("Consumers_Context");
 
-		minMargUtilOfQuality = (double) GetParameter("minMargUtilOfQuality");
+		rawMinWelfareParam = (double) GetParameter("minWelfareParam");
 
-		// Max marginal utility is updated every time a consumer is created
-		maxMargUtilOfQuality = 0.;
+		// Max WelfareParam is updated every time a consumer is created
+		rawMaxWelfareParam = 0.;
 
 		createProbabilityDistrib();
 
@@ -54,8 +54,8 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	private static void createProbabilityDistrib() {
 
-		// Marginal Utility of Quality
-		margUtilOfQualityDistrib = Pareto.getPareto(lambda, getMinMargUtilOfQuality());
+		// Welfare Param
+		welfareParamDistrib = Pareto.getPareto(lambda, RecessionsHandler.getMinWelfareParamPerceivedByFirms());
 
 		// Quality Discount
 		double mean = (Double) GetParameter("qualityDiscountMean");
@@ -66,46 +66,43 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static Pareto getMargUtilOfQualityDistrib() {
-		return margUtilOfQualityDistrib;
+	public static Pareto getWelfareParamDistrib() {
+		return welfareParamDistrib;
 	}
 
 	public static Beta getQualityDicountDistrib() {
 		return qualityDiscountDistrib;
 	}
 
-	public static long getExpectedConsumersAbove(double margUtilQuality) {
+	/*
+	 * This function depends on the assumption of Pareto distribution of welfare
+	 * parameter
+	 */
+	public static double getExpectedConsumersAbove(double welfareParameter) {
 
-		if (margUtilQuality <= minMargUtilOfQuality)
+		if (welfareParameter <= rawMinWelfareParam)
 			return mktSize;
-		else if (margUtilQuality == Double.POSITIVE_INFINITY)
-			return 0;
+		else if (welfareParameter == Double.POSITIVE_INFINITY)
+			return 0.;
 		else
-			return Math.round(mktSize * FastMath.pow(minMargUtilOfQuality / margUtilQuality, lambda));
+			return mktSize * FastMath.pow(rawMinWelfareParam / welfareParameter, lambda);
 
 	}
 
-	public long getConsumersAbove(double margUtilQuality) {
-		if (margUtilQuality == Double.POSITIVE_INFINITY)
-			return 0;
-		else
-			return this.stream().filter(c -> c.getMargUtilOfQuality() > margUtilQuality).count();
+	public static double getRawMinWelfareParam() {
+		return rawMinWelfareParam;
 	}
 
-	public static double getMinMargUtilOfQuality() {
-		return minMargUtilOfQuality;
-	}
-
-	public static double getMaxMargUtilOfQuality() {
-		return maxMargUtilOfQuality;
+	public static double getRawMaxWelfareParam() {
+		return rawMaxWelfareParam;
 	}
 
 	public static int getMarketSize() {
 		return mktSize;
 	}
 
-	public static void setMaxMargUtilOfQuality(double maxMargUtilOfQuality) {
-		Consumers.maxMargUtilOfQuality = maxMargUtilOfQuality;
+	public static void setRawMaxWelfareParam(double rawMaxWelfareParam) {
+		Consumers.rawMaxWelfareParam = rawMaxWelfareParam;
 	}
 
 	public static void createConsumers() {
@@ -116,26 +113,13 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public long getExpectedQuantityWExpecDistrib(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
+	public static double getExpectedQuantityWExpecDistrib(Offer segOffer, Optional<Offer> loOffer,
+			Optional<Offer> hiOffer) {
 
-		long demandAboveLoLimit, demandAboveHiLimit;
+		double demandAboveLoLimit, demandAboveHiLimit;
 
-		demandAboveLoLimit = getExpectedConsumersAbove(Offer.limit(loOffer, Optional.of(segOffer)));
-		demandAboveHiLimit = getExpectedConsumersAbove(Offer.limit(Optional.of(segOffer), hiOffer));
-
-		if (demandAboveLoLimit > demandAboveHiLimit)
-			return demandAboveLoLimit - demandAboveHiLimit;
-		else
-			return 0;
-
-	}
-
-	public long getExpectedQuantityWRealDistrib(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
-
-		long demandAboveLoLimit, demandAboveHiLimit;
-
-		demandAboveLoLimit = getConsumersAbove(Offer.limit(loOffer, Optional.of(segOffer)));
-		demandAboveHiLimit = getConsumersAbove(Offer.limit(Optional.of(segOffer), hiOffer));
+		demandAboveLoLimit = getExpectedConsumersAbove(Consumers.limitingWelfareParamPerceivedByFirms(loOffer, Optional.of(segOffer)));
+		demandAboveHiLimit = getExpectedConsumersAbove(Consumers.limitingWelfareParamPerceivedByFirms(Optional.of(segOffer), hiOffer));
 
 		if (demandAboveLoLimit > demandAboveHiLimit)
 			return demandAboveLoLimit - demandAboveHiLimit;
@@ -144,36 +128,65 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static double getMinMargUtilOfQualityAceptingOffer(Offer of) {
-		if (of == null)
-			throw new Error("Offer should not be null");
-		else {
-			double pDivQ = of.getPrice().doubleValue() / of.getQuality().doubleValue();
-			return FastMath.max(pDivQ, getMinMargUtilOfQuality());
+	/*
+	 * Calculates the welfare parameter (originally marginal utility of quality)
+	 * that divides consumer preferences, as perceived by firms (independenty how
+	 * recessions are taken into account on firms decisions)
+	 * 
+	 * Consumers with a welfare parameter below "limit" will choose loOffer, while
+	 * the ones with higher welfare parameter would choose hiOffer
+	 * 
+	 * When there is no limit, function returns POSITIVE_INFINITY
+	 */
+	public static double limitingWelfareParamPerceivedByFirms(Optional<Offer> loOf, Optional<Offer> hiOf) {
+
+		if (Offer.equivalentOffers(loOf, hiOf))
+			throw new Error("Offers should be different");
+
+		if (!hiOf.isPresent())
+			// If there is no higher Offer there is no limit
+			return Double.POSITIVE_INFINITY;
+
+		else if (!loOf.isPresent())
+			// If there is no lower Offer the limit is determined by the minimum welfare param
+			return UtilityFunction.getMinWelfareParamAceptingOfferPerceivedByFirms(hiOf.get());
+
+		else
+			// Both are present
+			return limit(loOf.get(), hiOf.get());
+
+	}
+
+	private static double limit(Offer loOf, Offer hiOf) {
+
+		assert (loOf != null) && (hiOf != null);
+
+		BigDecimal loQ, hiQ;
+
+		loQ = loOf.getQuality();
+		hiQ = hiOf.getQuality();
+
+		BigDecimal loP, hiP;
+		loP = loOf.getPrice();
+		hiP = hiOf.getPrice();
+
+		if (loQ.compareTo(hiQ) > 0)
+			throw new Error("higher offer quality should be >= than low offer quality");
+
+		else if (loP.compareTo(hiP) >= 0)
+			// no consumer would choose lower offer
+			return RecessionsHandler.getMinWelfareParamPerceivedByFirms();
+
+		else if (loQ.compareTo(hiQ) == 0) {
+			// as loP < hiP, no consumer would choose higher offer
+			return Double.POSITIVE_INFINITY;
+
+		} else {
+			// loQ < hiQ and loP < hiP
+			return UtilityFunction.calculateLimit(loP, loQ, hiP, hiQ);
+
 		}
-	}
 
-	public static BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
-		/*
-		 * It is assumed poorest consumer has margUtil = minMargUtil As margUtil > p/q p
-		 * < minMargUtil * q
-		 */
-		BigDecimal minMargUtil = BigDecimal.valueOf(getMinMargUtilOfQuality());
-
-		return quality.multiply(minMargUtil).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
-
-	}
-
-	public static BigDecimal getMaxPriceToHaveMinimumExpectedDemand(BigDecimal perceivedQ, double knownByPerc) {
-
-		// The price is calculated for the firm with highest quality, i.e. with no
-		// competing firm from above.
-		// Other firms will have a lower max price, but as it cannot be calculated
-		// analytically the restriction is introduced in the numerical maximization
-		double maxP = minMargUtilOfQuality * perceivedQ.doubleValue()
-				* FastMath.pow(mktSize * knownByPerc / minExpectedDemand, 1.0 / lambda);
-
-		return BigDecimal.valueOf(maxP).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
 	}
 
 	public static double getLambda() {

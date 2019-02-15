@@ -2,6 +2,8 @@ package optimalPrice;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+
+import consumers.UtilityFunction;
 import firms.Firm;
 import firms.ExpectedMarket;
 
@@ -24,7 +26,7 @@ public class Neighbors {
 
 		// Setting hiLimit. It is the minimum among max price to enter and max (price to
 		// expel previous firm or max price on the first call)
-		hiPriceLimit = ExpectedMarket.getMaxPriceToEnter(perceivedQ, loF, hiF);
+		hiPriceLimit = UtilityFunction.getMaxPriceToEnter(perceivedQ, loF, hiF);
 		maxPrice.ifPresent(p -> hiPriceLimit = hiPriceLimit.min(p));
 
 		if (loPriceLimit.compareTo(hiPriceLimit) >= 0)
@@ -52,7 +54,8 @@ public class Neighbors {
 		String loFStr = loF.map(Firm::toString).orElse("null");
 		String hiFStr = hiF.map(Firm::toString).orElse("null");
 
-		return "LoF: " + loFStr + ", HiF: " + hiFStr;
+		return "LoF: " + loFStr + ", HiF: " + hiFStr + ", LoPriceLim: " +
+		loPriceLimit.toString() + ", HiPriceLim: " + hiPriceLimit.toString();
 	}
 
 }

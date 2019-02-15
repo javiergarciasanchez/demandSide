@@ -11,6 +11,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumer;
 import consumers.Consumers;
+import consumers.UtilityFunction;
 import demandSide.Market;
 import demandSide.RunPriority;
 import firmTypes.FirmTypes;
@@ -98,11 +99,14 @@ public abstract class Firm {
 
 		// If quality is occupied it tries first upward then downward
 		Optional<BigDecimal> up = Offer.getUpWardClosestAvailableQuality(q);
+		
 		return (up.isPresent() ? up : Offer.getDownWardClosestAvailableQuality(q));
 
 	}
 
 	private void setNewDecision(Decision d) {
+		assert d != null;
+		
 		decision = d;
 		Market.firms.addToFirmLists(this);
 		initializeConsumerKnowledge();
@@ -116,7 +120,10 @@ public abstract class Firm {
 	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1, shuffle = true)
 	public void makeOffer() {
 
-		// if there is no decision it will keep previous one
+		// Gets possible quality options
+		// Then gets the optimal price for each quality option
+		// Gets the best decision according to expected profit
+		// If there is a valid new decision updates it decision otherwise keeps previous one
 		getRealQualityOptions().map(q -> getOptPriceDecision(q)).max(new DecisionComparator())
 				.ifPresent(this::updateDecision);
 
@@ -298,10 +305,6 @@ public abstract class Firm {
 
 	}
 
-	public double getMarginalCostOfQuality(BigDecimal realQ) {
-		return 2.0 / FastMath.pow(costParameter, 2.0) * realQ.doubleValue();
-	}
-
 	private boolean isToBeKilled() {
 
 		// Returns true if firm should exit the market
@@ -445,7 +448,7 @@ public abstract class Firm {
 	}
 
 	public double getPoorestConsumer() {
-		return Consumers.getMinMargUtilOfQualityAceptingOffer(getPerceivedOffer());
+		return UtilityFunction.getMinWelfareParamAceptingOfferPerceivedByFirms(getPerceivedOffer());
 	}
 
 	public double getMargin() {
