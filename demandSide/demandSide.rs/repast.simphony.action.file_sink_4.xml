@@ -1,0 +1,36 @@
+<repast.simphony.data2.engine.FileSinkDescriptor simphonyVersion="2.6.0">
+  <name>Firms</name>
+  <dataSet>Firms</dataSet>
+  <delimiter>,</delimiter>
+  <format>TABULAR</format>
+  <sourceIds class="linked-hash-set">
+    <string>AccumProfit</string>
+    <string>Age</string>
+    <string>AutoRegressiveProfit</string>
+    <string>Demand</string>
+    <string>FirmNumID</string>
+    <string>FixedCost</string>
+    <string>GrossMargin</string>
+    <string>Margin</string>
+    <string>PerceivedQuality</string>
+    <string>Price</string>
+    <string>Profit</string>
+    <string>Quality</string>
+    <string>Sales</string>
+    <string>FirmID</string>
+    <string>FirmType</string>
+    <string>GrossProfit</string>
+    <string>UnitCost</string>
+    <string>ExpectedDemand</string>
+    <string>ExpectedGrossProfit</string>
+    <string>MktShare</string>
+    <string>DemandShare</string>
+    <string>tick</string>
+    <string>run</string>
+    <string>random_seed</string>
+    <string>ExpectedLowLimit</string>
+    <string>ExpectedHighLimit</string>
+  </sourceIds>
+  <fileName>Firms.csv</fileName>
+  <addTimeStamp>true</addTimeStamp>
+</repast.simphony.data2.engine.FileSinkDescriptor>
