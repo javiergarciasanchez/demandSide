@@ -13,6 +13,7 @@
     <string>QualityDiscount</string>
     <string>RealUtility</string>
     <string>ExpectedUtility</string>
+    <string>RawWelfareParam</string>
   </sourceIds>
   <fileName>Consumers.csv</fileName>
   <addTimeStamp>true</addTimeStamp>

@@ -15,7 +15,6 @@ import consumers.UtilityFunction;
 import demandSide.Market;
 import demandSide.RunPriority;
 import firmTypes.FirmTypes;
-import graphs.Scale;
 import optimalPrice.OptimalPrice;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.essentials.RepastEssentials;
@@ -231,20 +230,6 @@ public abstract class Firm {
 		if (isToBeKilled())
 			Market.toBeKilled.add(this);
 
-		else
-			// Updates Projections of results
-			updateProjections();
-
-	}
-
-	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_PROJECTIONS_PRIORITY, interval = 1)
-	public void updateProjections() {
-		Scale.update(this);
-		Market.firms2DProjection.update(this);
-		Market.firmsDemandProjection.update(this);
-		Market.firmsProfitProjection.update(this);
-		Market.firmsSalesProjection.update(this);
-		Market.margUtilProjection.update(this);
 	}
 
 	private void initializeConsumerKnowledge() {

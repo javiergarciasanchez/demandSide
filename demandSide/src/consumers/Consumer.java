@@ -62,9 +62,6 @@ public class Consumer {
 
 		rawWelfareParam = Consumers.getWelfareParamDistrib().nextDouble();
 
-		// Upper limit is unbounded. The max welfare parameter is updated
-		Consumers.setRawMaxWelfareParam(FastMath.max(Consumers.getRawMaxWelfareParam(), rawWelfareParam));
-
 	}
 
 	private void setQualityDiscount() {
@@ -109,12 +106,6 @@ public class Consumer {
 
 	private boolean firstTimeChosen(Firm f) {
 		return (knownFirmsQualityFactor.get(f) != 1.0);
-	}
-
-	public void updateProjections() {
-		Market.consumersProjection.update(this);
-		Market.margUtilProjection.update(this);
-		Market.consumptionProjection.update(this);
 	}
 
 	// Returns the firm from the known firms that maximizes utility

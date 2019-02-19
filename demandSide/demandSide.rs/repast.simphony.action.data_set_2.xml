@@ -137,14 +137,6 @@
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>Profit</string>
-      <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>Profit</id>
-        <className>firms.Firm</className>
-        <methodName>getProfit</methodName>
-      </repast.simphony.data2.engine.MethodDataSourceDefinition>
-    </entry>
-    <entry>
       <string>UnitCost</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
         <id>UnitCost</id>

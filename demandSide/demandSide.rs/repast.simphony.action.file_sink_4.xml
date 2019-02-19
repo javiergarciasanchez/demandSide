@@ -19,7 +19,6 @@
     <string>Sales</string>
     <string>FirmID</string>
     <string>FirmType</string>
-    <string>Profit</string>
     <string>UnitCost</string>
     <string>ExpectedDemand</string>
     <string>ExpectedProfit</string>

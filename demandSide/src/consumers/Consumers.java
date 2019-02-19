@@ -19,8 +19,7 @@ public class Consumers extends DefaultContext<Consumer> {
 	// This variables are static to access them easily
 	// Are initialized in constructor without problem because
 	// only one instance is always created
-	private static double rawMinWelfareParam;
-	private static double rawMaxWelfareParam;
+	private static double rawMinWelfareParam;	
 	private static double lambda;
 
 	private static double minExpectedDemand;
@@ -31,7 +30,6 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	public static void resetStaticVars() {
 		rawMinWelfareParam = 0.0;
-		rawMaxWelfareParam = 0.0;
 		welfareParamDistrib = null;
 		qualityDiscountDistrib = null;
 		double gini = (double) GetParameter("gini");
@@ -44,9 +42,6 @@ public class Consumers extends DefaultContext<Consumer> {
 		super("Consumers_Context");
 
 		rawMinWelfareParam = (double) GetParameter("minWelfareParam");
-
-		// Max WelfareParam is updated every time a consumer is created
-		rawMaxWelfareParam = 0.;
 
 		createProbabilityDistrib();
 
@@ -93,16 +88,8 @@ public class Consumers extends DefaultContext<Consumer> {
 		return rawMinWelfareParam;
 	}
 
-	public static double getRawMaxWelfareParam() {
-		return rawMaxWelfareParam;
-	}
-
 	public static int getMarketSize() {
 		return mktSize;
-	}
-
-	public static void setRawMaxWelfareParam(double rawMaxWelfareParam) {
-		Consumers.rawMaxWelfareParam = rawMaxWelfareParam;
 	}
 
 	public static void createConsumers() {

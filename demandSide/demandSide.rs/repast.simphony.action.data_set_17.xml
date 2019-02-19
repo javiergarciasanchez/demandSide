@@ -33,14 +33,6 @@
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>MargUtilOfQuality</string>
-      <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>MargUtilOfQuality</id>
-        <className>consumers.Consumer</className>
-        <methodName>getRawWelfareParam</methodName>
-      </repast.simphony.data2.engine.MethodDataSourceDefinition>
-    </entry>
-    <entry>
       <string>QualityDiscount</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
         <id>QualityDiscount</id>
@@ -62,6 +54,14 @@
         <id>ExpectedUtility</id>
         <className>consumers.Consumer</className>
         <methodName>getExpectedUtility</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>RawWelfareParam</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>RawWelfareParam</id>
+        <className>consumers.Consumer</className>
+        <methodName>getRawWelfareParam</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
   </methodDataSources>
