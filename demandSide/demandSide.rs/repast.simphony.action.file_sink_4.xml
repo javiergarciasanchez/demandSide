@@ -19,10 +19,10 @@
     <string>Sales</string>
     <string>FirmID</string>
     <string>FirmType</string>
-    <string>GrossProfit</string>
+    <string>Profit</string>
     <string>UnitCost</string>
     <string>ExpectedDemand</string>
-    <string>ExpectedGrossProfit</string>
+    <string>ExpectedProfit</string>
     <string>MktShare</string>
     <string>DemandShare</string>
     <string>tick</string>

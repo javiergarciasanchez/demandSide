@@ -137,11 +137,11 @@
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>GrossProfit</string>
+      <string>Profit</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>GrossProfit</id>
+        <id>Profit</id>
         <className>firms.Firm</className>
-        <methodName>getGrossProfit</methodName>
+        <methodName>getProfit</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
@@ -161,11 +161,11 @@
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>ExpectedGrossProfit</string>
+      <string>ExpectedProfit</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>ExpectedGrossProfit</id>
+        <id>ExpectedProfit</id>
         <className>firms.Firm</className>
-        <methodName>getExpectedGrossProfit</methodName>
+        <methodName>getExpectedProfit</methodName>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>

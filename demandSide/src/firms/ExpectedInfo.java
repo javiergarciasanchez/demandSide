@@ -1,7 +1,7 @@
 package firms;
 
 public class ExpectedInfo {
-	public double grossProfit;
+	public double profit;
 	public double demand;
 	public double loLimit, hiLimit;
 	

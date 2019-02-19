@@ -18,7 +18,7 @@ public class DecisionComparator implements Comparator<Optional<Decision>> {
 			return 1;
 
 		else
-			return (int) FastMath.signum(dr1.get().expInf.grossProfit - dr2.get().expInf.grossProfit);
+			return (int) FastMath.signum(dr1.get().expInf.profit - dr2.get().expInf.profit);
 
 	}
 

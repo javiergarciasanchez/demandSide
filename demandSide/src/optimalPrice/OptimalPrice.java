@@ -21,8 +21,11 @@ import firms.ExpectedMarket;
 
 public class OptimalPrice {
 
-	public static Optional<OptimalPriceResult> get(BigDecimal perceivedQ, double cost, double knownByPerc,
-			ExpectedMarket expMkt) {
+	public static Optional<OptimalPriceResult> get(Firm firm, BigDecimal realQ, ExpectedMarket expMkt) {
+
+		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
+		double cost = firm.getUnitCost(realQ);
+		double knownByPerc = firm.getKnownByPerc();
 
 		Neighbors currNeighbors;
 		OptimalPriceResult returnResult = null;
@@ -45,7 +48,7 @@ public class OptimalPrice {
 		} catch (NoMarketSegmentForFirm e) {
 			return Optional.empty();
 		}
-		returnResult = getSegmentOptimalResult(perceivedQ, cost, knownByPerc, currNeighbors);
+		returnResult = getSegmentOptimalResult(firm, realQ, currNeighbors);
 
 		// Note that a neighbor that is expelled with any price has an empty
 		// priceToBeExpelled
@@ -70,8 +73,8 @@ public class OptimalPrice {
 				continue;
 			}
 
-			OptimalPriceResult tempResult = getSegmentOptimalResult(perceivedQ, cost, knownByPerc, currNeighbors);
-			if (tempResult.expInf.grossProfit > returnResult.expInf.grossProfit)
+			OptimalPriceResult tempResult = getSegmentOptimalResult(firm, realQ, currNeighbors);
+			if (tempResult.expInf.profit > returnResult.expInf.profit)
 				returnResult = tempResult;
 
 		}
@@ -80,34 +83,38 @@ public class OptimalPrice {
 
 	}
 
-	private static OptimalPriceResult getSegmentOptimalResult(BigDecimal perceivedQ, double cost, double knownByPerc,
-			Neighbors currNeighbors) {
+	private static OptimalPriceResult getSegmentOptimalResult(Firm firm, BigDecimal realQ, Neighbors currNeighbors) {
 
 		assert currNeighbors.getLoPriceLimit().compareTo(currNeighbors.getHiPriceLimit()) < 0;
 
+		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
+		double cost = firm.getUnitCost(realQ);
+		double knownByPerc = firm.getKnownByPerc();
+
 		OptimalPriceResult result = new OptimalPriceResult();
 
-		result.price = getSegmentOptimalPrice(perceivedQ, cost, knownByPerc, currNeighbors);
+		result.price = getSegmentOptimalPrice(firm, realQ, currNeighbors);
 
 		Optional<Offer> loOffer = currNeighbors.getLoF().map(Firm::getPerceivedOffer);
 		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
 
 		// Collect expected data
-		result.expInf.demand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ),
-				loOffer, hiOffer) * knownByPerc;
-		result.expInf.grossProfit = result.expInf.demand * (result.price.doubleValue() - cost);
-		
+		result.expInf.demand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ), loOffer,
+				hiOffer) * knownByPerc;
+
+		result.expInf.profit = Firm.calcProfit(result.price.doubleValue(), cost, result.expInf.demand,
+				firm.getFixedCost());
+
 		// Collect
 		Optional<Offer> currOf = Optional.of(new Offer(result.price, perceivedQ));
 		result.expInf.loLimit = Consumers.limitingWelfareParamPerceivedByFirms(loOffer, currOf);
-		result.expInf.hiLimit = Consumers.limitingWelfareParamPerceivedByFirms(currOf, hiOffer);		
-		
+		result.expInf.hiLimit = Consumers.limitingWelfareParamPerceivedByFirms(currOf, hiOffer);
+
 		return result;
 
 	}
 
-	private static BigDecimal getSegmentOptimalPrice(BigDecimal perceivedQ, double cost, double knownByPerc,
-			Neighbors currNeighbors) {
+	private static BigDecimal getSegmentOptimalPrice(Firm firm, BigDecimal realQ, Neighbors currNeighbors) {
 
 		BigDecimal loPriceLimit = currNeighbors.getLoPriceLimit();
 		BigDecimal hiPriceLimit = currNeighbors.getHiPriceLimit();
@@ -121,8 +128,8 @@ public class OptimalPrice {
 
 		// This function returns zero when expected demand is smaller than
 		// minExpectedDemand
-		ExpectedGrossProfitForMaximization expectedGrossProfitForMaxim = new ExpectedGrossProfitForMaximization(
-				perceivedQ.doubleValue(), cost, knownByPerc, loOffer, hiOffer);
+		ExpectedProfitForMaximization expectedGrossProfitForMaxim = new ExpectedProfitForMaximization(firm, realQ,
+				loOffer, hiOffer);
 
 		// Setting the optimizer
 		double rel = 1.e-12; // Relative threshold.
@@ -137,10 +144,10 @@ public class OptimalPrice {
 			UnivariatePointValuePair optimRetval = optim.optimize(
 					new SearchInterval(loPriceLimit.doubleValue(), hiPriceLimit.doubleValue()), GoalType.MAXIMIZE,
 					new UnivariateObjectiveFunction(expectedGrossProfitForMaxim), maxIter, maxEval);
-			
+
 			double optPrice = optimRetval.getPoint();
-			assert (loPriceLimit.doubleValue() <= optPrice) && ( optPrice <= hiPriceLimit.doubleValue());
-			
+			assert (loPriceLimit.doubleValue() <= optPrice) && (optPrice <= hiPriceLimit.doubleValue());
+
 			retval = BigDecimal.valueOf(optPrice);
 
 		} catch (TooManyEvaluationsException e) {

@@ -99,14 +99,14 @@ public abstract class Firm {
 
 		// If quality is occupied it tries first upward then downward
 		Optional<BigDecimal> up = Offer.getUpWardClosestAvailableQuality(q);
-		
+
 		return (up.isPresent() ? up : Offer.getDownWardClosestAvailableQuality(q));
 
 	}
 
 	private void setNewDecision(Decision d) {
 		assert d != null;
-		
+
 		decision = d;
 		Market.firms.addToFirmLists(this);
 		initializeConsumerKnowledge();
@@ -123,7 +123,8 @@ public abstract class Firm {
 		// Gets possible quality options
 		// Then gets the optimal price for each quality option
 		// Gets the best decision according to expected profit
-		// If there is a valid new decision updates it decision otherwise keeps previous one
+		// If there is a valid new decision updates it decision otherwise keeps previous
+		// one
 		getRealQualityOptions().map(q -> getOptPriceDecision(q)).max(new DecisionComparator())
 				.ifPresent(this::updateDecision);
 
@@ -158,9 +159,7 @@ public abstract class Firm {
 
 		ExpectedMarket expMkt = new ExpectedMarket(this);
 
-		Optional<Decision> opd = OptimalPrice
-				.get(getPerceivedQuality(realQ), getUnitCost(realQ), getKnownByPerc(), expMkt)
-				.map(opr -> new Decision(opr, realQ));
+		Optional<Decision> opd = OptimalPrice.get(this, realQ, expMkt).map(opr -> new Decision(opr, realQ));
 
 		return opd;
 
@@ -213,7 +212,7 @@ public abstract class Firm {
 		// Calculates profit, accumProfit and kills the firm if necessary
 
 		// Calculate profits of period
-		profit = calcProfit();
+		profit = calcProfit(getPrice().doubleValue(), getUnitCost(getQuality()), getDemand(), getFixedCost());
 
 		accumProfit += getProfit();
 
@@ -295,8 +294,8 @@ public abstract class Firm {
 
 	}
 
-	private double calcProfit() {
-		return (getPrice().doubleValue() - getUnitCost(getQuality())) * getDemand() - fixedCost;
+	public static double calcProfit(double price, double unitCost, double demand, double fixedCost) {
+		return (price - unitCost) * demand - fixedCost;
 	}
 
 	public double getUnitCost(BigDecimal quality) {
@@ -371,10 +370,10 @@ public abstract class Firm {
 		return decision.expInf.demand;
 	}
 
-	public double getExpectedGrossProfit() {
-		return decision.expInf.grossProfit;
+	public double getExpectedProfit() {
+		return decision.expInf.profit;
 	}
-	
+
 	public double getExpectedLowLimit() {
 		return decision.expInf.loLimit;
 	}
@@ -440,7 +439,7 @@ public abstract class Firm {
 	}
 
 	public double getGrossProfit() {
-		return (getPrice().doubleValue() - getUnitCost(getQuality())) * getDemand();
+		return getProfit() + getFixedCost();
 	}
 
 	public double getGrossMargin() {
