@@ -105,7 +105,7 @@ public class OptimalPrice {
 		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
 
 		// Collect expected data
-		double fullDemand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ), loOffer,
+		double fullDemand = Consumers.getExpectedQuantity(new Offer(result.price, perceivedQ), loOffer,
 				hiOffer);
 		result.expInf.demand = firm.getAdjustedDemand(fullDemand);
 

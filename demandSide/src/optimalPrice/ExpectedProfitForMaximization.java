@@ -32,7 +32,7 @@ public class ExpectedProfitForMaximization implements UnivariateFunction {
 	@Override
 	public double value(double p) {
 		
-		double fullKnowledgeExpDemand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(p, perceivedQ), loOffer,
+		double fullKnowledgeExpDemand = Consumers.getExpectedQuantity(new Offer(p, perceivedQ), loOffer,
 				hiOffer);
 
 		double expDemand = adjDemand.applyAsDouble(fullKnowledgeExpDemand);

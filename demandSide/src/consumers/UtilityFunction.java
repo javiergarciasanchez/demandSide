@@ -28,9 +28,6 @@ public class UtilityFunction {
 		return welfareParam * o.getQuality().doubleValue() * qualityFactor - o.getPrice().doubleValue();
 	}
 
-	/*
-	 * This function is for probe purposes only
-	 */
 	public static double realUtility(double welfareParam, Offer o) {
 		// equal to expectedUtility except for the qualityFactor
 		return welfareParam * o.getQuality().doubleValue() - o.getPrice().doubleValue();

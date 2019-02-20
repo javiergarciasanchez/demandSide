@@ -137,7 +137,7 @@ public class Consumer {
 		return UtilityFunction.expectedUtility(welfareParam, f.getOffer(), qualityFactor);
 	}
 
-	private double realUtility(Firm f, double qualityFactor) {
+	private double realUtility(Firm f) {
 
 		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
 
@@ -183,7 +183,7 @@ public class Consumer {
 	}
 
 	public double getRealUtility() {
-		return chosenFirm.map(f -> realUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
+		return chosenFirm.map(f -> realUtility(f)).orElse(0.0);
 	}
 
 	public double getConsumerIntID() {
