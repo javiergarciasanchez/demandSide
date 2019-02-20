@@ -1,0 +1,67 @@
+<repast.simphony.data2.engine.DataSetDescriptor simphonyVersion="2.6.0">
+  <name>FirmsbyType</name>
+  <type>AGGREGATE</type>
+  <inclTick>true</inclTick>
+  <inclBatchRun>false</inclBatchRun>
+  <inclRandomSeed>false</inclRandomSeed>
+  <scheduleParams>
+    <start>1.0</start>
+    <interval>1.0</interval>
+    <priority>-Infinity</priority>
+    <pType>LAST</pType>
+    <duration>-1.0</duration>
+    <frequency>REPEAT</frequency>
+    <hashCode>-1273297334</hashCode>
+  </scheduleParams>
+  <atEnd>true</atEnd>
+  <methodDataSources class="linked-hash-map">
+    <entry>
+      <string>NoQCh_AcumP</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>NoQCh_AcumP</id>
+        <className>firmTypes.NoQChangeFirm</className>
+        <methodName>getProfit</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>IncrQ_AcumP</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>IncrQ_AcumP</id>
+        <className>firmTypes.IncreaseQFirm</className>
+        <methodName>getProfit</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>NoQIncr_AcumP</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>NoQIncr_AcumP</id>
+        <className>firmTypes.NoQIncreaseFirm</className>
+        <methodName>getProfit</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>NoQRed_AcumP</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>NoQRed_AcumP</id>
+        <className>firmTypes.NoQReductionFirm</className>
+        <methodName>getProfit</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>StdF_AcumP</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>StdF_AcumP</id>
+        <className>firmTypes.StandardFirm</className>
+        <methodName>getProfit</methodName>
+        <aggType>SUM</aggType>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+  </methodDataSources>
+  <countSources class="linked-hash-map"/>
+  <customNADataSources class="linked-hash-map"/>
+  <customAggDataSources class="linked-hash-map"/>
+</repast.simphony.data2.engine.DataSetDescriptor>

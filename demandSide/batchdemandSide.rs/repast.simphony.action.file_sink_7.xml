@@ -1,0 +1,20 @@
+<repast.simphony.data2.engine.FileSinkDescriptor simphonyVersion="2.6.0">
+  <name>Consumers</name>
+  <dataSet>Consumers</dataSet>
+  <delimiter>,</delimiter>
+  <format>TABULAR</format>
+  <sourceIds class="linked-hash-set">
+    <string>tick</string>
+    <string>run</string>
+    <string>random_seed</string>
+    <string>ConsumerID</string>
+    <string>ChosenFirmIntID</string>
+    <string>MargUtilOfQuality</string>
+    <string>QualityDiscount</string>
+    <string>RealUtility</string>
+    <string>ExpectedUtility</string>
+    <string>RawWelfareParam</string>
+  </sourceIds>
+  <fileName>Consumers.csv</fileName>
+  <addTimeStamp>true</addTimeStamp>
+</repast.simphony.data2.engine.FileSinkDescriptor>

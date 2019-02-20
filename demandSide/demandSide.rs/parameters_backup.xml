@@ -30,12 +30,6 @@
 						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
 									
 		/>
-				<parameter name="minimumExpectedDemand" displayName="Minimum Expected Demand on Maximization" type="double" 
-						defaultValue="10.0" 
-						isReadOnly="false" 
-						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
-									
-		/>
 				<parameter name="recessionDuration" displayName="Recessions Duration (sep by :  - colon)" type="java.lang.String" 
 						defaultValue="3" 
 						isReadOnly="false" 

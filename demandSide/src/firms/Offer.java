@@ -6,13 +6,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
-import consumers.UtilityFunction;
+import consumers.Consumers;
 import demandSide.Market;
 
 public class Offer {
 
 	private static int priceScale, qualityScale;
-	private static BigDecimal maxPrice, maxQuality;
 	private static BigDecimal qualityStep;
 	private static BigDecimal minDeltaPrice, minDeltaQuality;
 
@@ -45,9 +44,6 @@ public class Offer {
 		priceScale = (Integer) GetParameter("priceScale");
 		qualityScale = (Integer) GetParameter("qualityScale");
 
-		maxPrice = BigDecimal.valueOf((Integer) GetParameter("maxPrice"));
-		maxQuality = BigDecimal.valueOf((Integer) GetParameter("maxQuality"));
-
 		qualityStep = BigDecimal.valueOf((Double) GetParameter("qualityStep"));
 
 		minDeltaPrice = BigDecimal.ONE.movePointLeft(priceScale).setScale(priceScale);
@@ -59,26 +55,18 @@ public class Offer {
 		return getMinDeltaQuality();
 	}
 
-	public static BigDecimal getMaxQuality() {
-		return maxQuality;
-	}
-
 	public static BigDecimal getMinPrice(double cost, BigDecimal perceivedQ) {
 		// Should be higher than cost
 		BigDecimal costPlus = (BigDecimal.valueOf(cost)).add(minDeltaPrice);
 
 		// Shouldn't be lower than the price needed to catch poorest consumer
-		BigDecimal pricePoorest = UtilityFunction.getMaxPriceForPoorestConsumer(perceivedQ);
+		BigDecimal pricePoorest = Consumers.getMaxPriceForPoorestConsumer(perceivedQ);
 
 		return costPlus.max(pricePoorest).setScale(getPriceScale(), RoundingMode.CEILING);
 	}
 
 	public static BigDecimal getMinPrice(Firm f, BigDecimal realQuality) {
 		return getMinPrice(f.getUnitCost(realQuality), f.getPerceivedQuality(realQuality));
-	}
-
-	public static BigDecimal getMaxPrice() {
-		return maxPrice;
 	}
 
 	public static boolean equivalentOffers(Optional<Offer> loOf, Optional<Offer> hiOf) {
@@ -110,15 +98,12 @@ public class Offer {
 
 	public static Optional<BigDecimal> getUpWardClosestAvailableQuality(BigDecimal q) {
 
-		// Search an available quality moving down
-		while (Market.firms.firmsByQ.containsKey(q) && q.compareTo(maxQuality) < 0) {
+		// Search an available quality moving upward
+		while (Market.firms.firmsByQ.containsKey(q)) {
 			q = q.add(minDeltaQuality);
 		}
 
-		if (Market.firms.firmsByQ.containsKey(q))
-			return Optional.empty();
-		else
-			return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
+		return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
 
 	}
 
@@ -147,7 +132,7 @@ public class Offer {
 	}
 
 	public static RoundingMode getQualityRounding() {
-		return RoundingMode.HALF_DOWN;
+		return RoundingMode.HALF_UP;
 	}
 
 	public void setQuality(BigDecimal q) {

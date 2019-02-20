@@ -11,7 +11,7 @@ public class Neighbors {
 	private Optional<Firm> loF, hiF;
 	private BigDecimal loPriceLimit, hiPriceLimit;
 
-	public Neighbors(ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Optional<BigDecimal> maxPrice)
+	public Neighbors(Firm f, ExpectedMarket expMkt, BigDecimal perceivedQ, BigDecimal minPrice, Optional<BigDecimal> maxPrice)
 			throws NoMarketSegmentForFirm {
 
 		loF = expMkt.getLowerFirmGivenQ(perceivedQ);
@@ -26,7 +26,7 @@ public class Neighbors {
 
 		// Setting hiLimit. It is the minimum among max price to enter and max (price to
 		// expel previous firm or max price on the first call)
-		hiPriceLimit = UtilityFunction.getMaxPriceToEnter(perceivedQ, loF, hiF);
+		hiPriceLimit = UtilityFunction.getMaxPriceToEnter(f, perceivedQ, loF, hiF);
 		maxPrice.ifPresent(p -> hiPriceLimit = hiPriceLimit.min(p));
 
 		if (loPriceLimit.compareTo(hiPriceLimit) >= 0)

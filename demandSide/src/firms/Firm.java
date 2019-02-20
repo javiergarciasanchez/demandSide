@@ -237,7 +237,7 @@ public abstract class Firm {
 		notYetKnownBy.addAll(Market.consumers);
 
 		// Take out of the list the initial "knower's"
-		getFromIgnorance(FastMath.round((Double) GetParameter("initiallyKnownByPerc") * Market.consumers.size()));
+		getFromIgnorance(FastMath.round((Double) GetParameter("initiallyKnownByPerc") * Consumers.getMarketSize()));
 
 	}
 
@@ -318,7 +318,14 @@ public abstract class Firm {
 		demand = i;
 	}
 
-	public double getKnownByPerc() {
+	/*
+	 * Returns demand adjusted by knowledge by consumers
+	 */
+	public double getAdjustedDemand(double demand) {
+		return demand * getKnownByPerc();
+	}
+
+	private double getKnownByPerc() {
 		return 1.0 - (double) notYetKnownBy.size() / (double) Consumers.getMarketSize();
 	}
 

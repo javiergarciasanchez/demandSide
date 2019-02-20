@@ -9,6 +9,7 @@ import org.apache.commons.math3.util.FastMath;
 
 import cern.jet.random.Beta;
 import demandSide.RecessionsHandler;
+import firms.Firm;
 import firms.Offer;
 import repast.simphony.context.DefaultContext;
 import repast.simphony.random.RandomHelper;
@@ -19,10 +20,9 @@ public class Consumers extends DefaultContext<Consumer> {
 	// This variables are static to access them easily
 	// Are initialized in constructor without problem because
 	// only one instance is always created
-	private static double rawMinWelfareParam;	
+	private static double rawMinWelfareParam;
 	private static double lambda;
-
-	private static double minExpectedDemand;
+	private static double probabilityForRichestConsumer;
 
 	private static Pareto welfareParamDistrib;
 	private static Beta qualityDiscountDistrib;
@@ -34,17 +34,17 @@ public class Consumers extends DefaultContext<Consumer> {
 		qualityDiscountDistrib = null;
 		double gini = (double) GetParameter("gini");
 		lambda = (1.0 + gini) / (2.0 * gini);
-		mktSize = (int) GetParameter("numberOfConsumers");
-		minExpectedDemand = (double) GetParameter("minimumExpectedDemand");
+		mktSize = (int) GetParameter("numberOfConsumers");		
+		probabilityForRichestConsumer = (double) GetParameter("richestProbability");		
 	}
 
 	public Consumers() {
 		super("Consumers_Context");
-
+	
 		rawMinWelfareParam = (double) GetParameter("minWelfareParam");
-
+	
 		createProbabilityDistrib();
-
+	
 	}
 
 	private static void createProbabilityDistrib() {
@@ -59,6 +59,21 @@ public class Consumers extends DefaultContext<Consumer> {
 		double beta = alpha * (1 - mean) / mean;
 		qualityDiscountDistrib = RandomHelper.createBeta(alpha, beta);
 
+	}
+
+	/*
+	 * Calculates the maximum raw welfare parameter that guarantees at least one
+	 * consumer with probability given as parameter
+	 */
+	public static double getRawMaxWelfareParamForRichestConsumer(Firm f) {
+	
+		double adjMktSize = f.getAdjustedDemand(mktSize); 
+	
+		double tmp = Math.pow(1 - probabilityForRichestConsumer, 1.0 / adjMktSize);
+		tmp = Math.pow(1 - tmp, 1 / lambda);
+	
+		return rawMinWelfareParam / tmp;
+	
 	}
 
 	public static Pareto getWelfareParamDistrib() {
@@ -105,8 +120,10 @@ public class Consumers extends DefaultContext<Consumer> {
 
 		double demandAboveLoLimit, demandAboveHiLimit;
 
-		demandAboveLoLimit = getExpectedConsumersAbove(Consumers.limitingWelfareParamPerceivedByFirms(loOffer, Optional.of(segOffer)));
-		demandAboveHiLimit = getExpectedConsumersAbove(Consumers.limitingWelfareParamPerceivedByFirms(Optional.of(segOffer), hiOffer));
+		demandAboveLoLimit = getExpectedConsumersAbove(
+				Consumers.limitingWelfareParamPerceivedByFirms(loOffer, Optional.of(segOffer)));
+		demandAboveHiLimit = getExpectedConsumersAbove(
+				Consumers.limitingWelfareParamPerceivedByFirms(Optional.of(segOffer), hiOffer));
 
 		if (demandAboveLoLimit > demandAboveHiLimit)
 			return demandAboveLoLimit - demandAboveHiLimit;
@@ -135,7 +152,8 @@ public class Consumers extends DefaultContext<Consumer> {
 			return Double.POSITIVE_INFINITY;
 
 		else if (!loOf.isPresent())
-			// If there is no lower Offer the limit is determined by the minimum welfare param
+			// If there is no lower Offer the limit is determined by the minimum welfare
+			// param
 			return UtilityFunction.getMinWelfareParamAceptingOfferPerceivedByFirms(hiOf.get());
 
 		else
@@ -184,12 +202,21 @@ public class Consumers extends DefaultContext<Consumer> {
 		Consumers.lambda = lambda;
 	}
 
-	public static double getMinExpectedDemand() {
-		return minExpectedDemand;
+	public static BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
+		
+		double rawPoorestWP = getRawMinWelfareParam();
+		double poorestWelfareParam = RecessionsHandler.getWelfareParamPerceivedByFirms(rawPoorestWP);
+		
+		return UtilityFunction.getMaxPriceForWelfareParam(quality, poorestWelfareParam);
+	
 	}
 
-	public static void setMinExpectedDemand(double minExpectedDemand) {
-		Consumers.minExpectedDemand = minExpectedDemand;
+	public static BigDecimal getMaxPriceForRichestConsumer(Firm f, BigDecimal perceivedQ) {
+		
+		double rawRichestWP = getRawMaxWelfareParamForRichestConsumer(f);
+		double richestWelfareParam = RecessionsHandler.getWelfareParamPerceivedByFirms(rawRichestWP);
+		
+		return UtilityFunction.getMaxPriceForWelfareParam(perceivedQ, richestWelfareParam);
 	}
 
 }

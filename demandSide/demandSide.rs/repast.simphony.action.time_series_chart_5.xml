@@ -1,9 +1,9 @@
 <repast.simphony.chart2.engine.TimeSeriesChartDescriptor simphonyVersion="2.6.0">
-  <name>UnitCost</name>
-  <dataSet>Firms</dataSet>
+  <name>ProfitperType</name>
+  <dataSet>FirmsbyType</dataSet>
   <xAxisLabel>Tick Count</xAxisLabel>
   <yAxisLabel></yAxisLabel>
-  <chartTitle>Unit Cost</chartTitle>
+  <chartTitle>Acum Profit per Type</chartTitle>
   <type>TIME_SERIES</type>
   <background>
     <red>192</red>
@@ -21,14 +21,66 @@
   <showLegend>true</showLegend>
   <seriesIds>
     <entry>
-      <string>FirmID</string>
+      <string>StdF_AcumP</string>
       <SeriesData>
-        <label></label>
+        <label>StdF_AcumP</label>
+        <color>
+          <red>255</red>
+          <green>200</green>
+          <blue>0</blue>
+          <alpha>255</alpha>
+        </color>
+      </SeriesData>
+    </entry>
+    <entry>
+      <string>NoQIncr_AcumP</string>
+      <SeriesData>
+        <label>NoQIncr_AcumP</label>
+        <color>
+          <red>0</red>
+          <green>255</green>
+          <blue>0</blue>
+          <alpha>255</alpha>
+        </color>
+      </SeriesData>
+    </entry>
+    <entry>
+      <string>IncrQ_AcumP</string>
+      <SeriesData>
+        <label>IncrQ_AcumP</label>
+        <color>
+          <red>255</red>
+          <green>0</green>
+          <blue>0</blue>
+          <alpha>255</alpha>
+        </color>
+      </SeriesData>
+    </entry>
+    <entry>
+      <string>NoQCh_AcumP</string>
+      <SeriesData>
+        <label>NoQCh_AcumP</label>
+        <color>
+          <red>0</red>
+          <green>0</green>
+          <blue>255</blue>
+          <alpha>255</alpha>
+        </color>
+      </SeriesData>
+    </entry>
+    <entry>
+      <string>NoQRed_AcumP</string>
+      <SeriesData>
+        <label>NoQRed_AcumP</label>
+        <color>
+          <red>255</red>
+          <green>0</green>
+          <blue>255</blue>
+          <alpha>255</alpha>
+        </color>
       </SeriesData>
     </entry>
   </seriesIds>
-  <dataValueIds>
-    <string>UnitCost</string>
-  </dataValueIds>
+  <dataValueIds/>
   <plotRangeLength>-1</plotRangeLength>
 </repast.simphony.chart2.engine.TimeSeriesChartDescriptor>

@@ -14,7 +14,6 @@ import org.apache.commons.math3.optim.univariate.SearchInterval;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import consumers.Consumers;
-import consumers.UtilityFunction;
 import firms.Firm;
 import firms.Offer;
 import firms.ExpectedMarket;
@@ -25,15 +24,23 @@ public class OptimalPrice {
 
 		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
 		double cost = firm.getUnitCost(realQ);
-		double knownByPerc = firm.getKnownByPerc();
 
 		Neighbors currNeighbors;
 		OptimalPriceResult returnResult = null;
 
 		BigDecimal minPrice = Offer.getMinPrice(cost, perceivedQ);
-		BigDecimal maxPrice = UtilityFunction.getMaxPriceToHaveMinimumExpectedDemand(perceivedQ, knownByPerc);
+		BigDecimal maxPrice = Consumers.getMaxPriceForRichestConsumer(firm, perceivedQ);
 
-		// Remove firms that have price to expel higher than maxprice
+		/*
+		 * Remove firms that are not going to be considered as neighbors
+		 *
+		 * It includes
+		 * 
+		 * - firms that are expelled at any price: price to be expelled is empty
+		 * 
+		 * - firms that have price to be expelled higher than maxprice
+		 * 
+		 */
 		expMkt.removeIf(f -> {
 			Optional<BigDecimal> pToE = expMkt.getPriceToExpel(perceivedQ, Optional.of(f));
 			if (pToE.isPresent())
@@ -42,9 +49,9 @@ public class OptimalPrice {
 				return false;
 		});
 
-		// Get first optimal price (ie without expelling any neighbor
+		// Get first optimal price (ie without expelling any neighbor)
 		try {
-			currNeighbors = new Neighbors(expMkt, perceivedQ, minPrice, Optional.of(maxPrice));
+			currNeighbors = new Neighbors(firm, expMkt, perceivedQ, minPrice, Optional.of(maxPrice));
 		} catch (NoMarketSegmentForFirm e) {
 			return Optional.empty();
 		}
@@ -68,7 +75,7 @@ public class OptimalPrice {
 			expMkt.remove(toBeExpelled.f);
 
 			try {
-				currNeighbors = new Neighbors(expMkt, perceivedQ, minPrice, prevPriceToBeExpelled);
+				currNeighbors = new Neighbors(firm, expMkt, perceivedQ, minPrice, prevPriceToBeExpelled);
 			} catch (NoMarketSegmentForFirm e) {
 				continue;
 			}
@@ -89,7 +96,6 @@ public class OptimalPrice {
 
 		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
 		double cost = firm.getUnitCost(realQ);
-		double knownByPerc = firm.getKnownByPerc();
 
 		OptimalPriceResult result = new OptimalPriceResult();
 
@@ -99,8 +105,9 @@ public class OptimalPrice {
 		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
 
 		// Collect expected data
-		result.expInf.demand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ), loOffer,
-				hiOffer) * knownByPerc;
+		double fullDemand = Consumers.getExpectedQuantityWExpecDistrib(new Offer(result.price, perceivedQ), loOffer,
+				hiOffer);
+		result.expInf.demand = firm.getAdjustedDemand(fullDemand);
 
 		result.expInf.profit = Firm.calcProfit(result.price.doubleValue(), cost, result.expInf.demand,
 				firm.getFixedCost());

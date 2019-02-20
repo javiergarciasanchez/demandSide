@@ -15,10 +15,10 @@ public class UtilityFunction {
 	/*
 	 * Functions used by consumers
 	 */
-	
+
 	/*
-	 * Utility function used by consumers to choose firm
-	 * the quality factor is discount factor applied to quality for choosing an untried firm 
+	 * Utility function used by consumers to choose firm the quality factor is
+	 * discount factor applied to quality for choosing an untried firm
 	 */
 	public static double expectedUtility(double welfareParam, Offer o, double qualityFactor) {
 
@@ -27,26 +27,24 @@ public class UtilityFunction {
 
 		return welfareParam * o.getQuality().doubleValue() * qualityFactor - o.getPrice().doubleValue();
 	}
-	
+
 	/*
 	 * This function is for probe purposes only
 	 */
 	public static double realUtility(double welfareParam, Offer o) {
 		// equal to expectedUtility except for the qualityFactor
-		return welfareParam * o.getQuality().doubleValue()  - o.getPrice().doubleValue();
+		return welfareParam * o.getQuality().doubleValue() - o.getPrice().doubleValue();
 	}
 
-	
-	
 	/*
 	 * Functions used by Firms
 	 */
-	public static BigDecimal getMaxPriceToEnter(BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
+	public static BigDecimal getMaxPriceToEnter(Firm f, BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
 
 		BigDecimal loP, loQ, hiP, hiQ;
 
 		if (!hiF.isPresent())
-			return Offer.getMaxPrice();
+			return Consumers.getMaxPriceForRichestConsumer(f, perceivedQ);
 
 		// note that null will never be assigned because hiF is present
 		hiP = hiF.map(Firm::getPrice).orElse(null);
@@ -71,10 +69,23 @@ public class UtilityFunction {
 
 	}
 
+	/*
+	 * As Welfare param > p/q
+	 * 
+	 * then p < minMargUtil * q
+	 */
+	static BigDecimal getMaxPriceForWelfareParam(BigDecimal quality, double welfareParam) {
+	
+		BigDecimal wP = BigDecimal.valueOf(welfareParam);
+	
+		return quality.multiply(wP).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
+	
+	}
+
 	public static double calculateLimit(BigDecimal loP, BigDecimal loQ, BigDecimal hiP, BigDecimal hiQ) {
 
 		assert (loQ.compareTo(hiQ) < 0) && (loP.compareTo(hiP) < 0);
-		
+
 		BigDecimal deltaP = hiP.subtract(loP);
 		BigDecimal deltaQ = hiQ.subtract(loQ);
 
@@ -93,13 +104,13 @@ public class UtilityFunction {
 	 * 
 	 */
 	public static BigDecimal priceToExpelFromAbove(BigDecimal q, Firm f, Optional<Firm> fLowNeighbor) {
-	
+
 		assert f != null;
-	
+
 		Optional<Offer> fLowNeighborOffer = fLowNeighbor.map(firm -> firm.getPerceivedOffer());
 		Optional<Offer> fOffer = Optional.of(f.getPerceivedOffer());
 		double fLowLimit = Consumers.limitingWelfareParamPerceivedByFirms(fLowNeighborOffer, fOffer);
-	
+
 		if (fLowLimit == Double.POSITIVE_INFINITY)
 			// Any price expels f
 			return null;
@@ -118,12 +129,12 @@ public class UtilityFunction {
 	 * 
 	 */
 	public static BigDecimal priceToExpelFromBelow(BigDecimal q, Firm f, Optional<Firm> fHighNeighbor) {
-	
+
 		Optional<Offer> fHighNeighborOffer = fHighNeighbor.map(firm -> firm.getPerceivedOffer());
 		Optional<Offer> fOffer = Optional.of(f.getPerceivedOffer());
-	
+
 		double fHighLimit = Consumers.limitingWelfareParamPerceivedByFirms(fOffer, fHighNeighborOffer);
-	
+
 		if (fHighLimit == Double.POSITIVE_INFINITY)
 			// No price expels f
 			return BigDecimal.ZERO;
@@ -137,46 +148,12 @@ public class UtilityFunction {
 	 * This depends on consumers utility functional form
 	 */
 	public static double getMinWelfareParamAceptingOfferPerceivedByFirms(Offer of) {
-	
+
 		assert of != null;
-	
+
 		double pDivQ = of.getPrice().doubleValue() / of.getQuality().doubleValue();
 		return FastMath.max(pDivQ, RecessionsHandler.getMinWelfareParamPerceivedByFirms());
-	
-	}
 
-	/*
-	 * This depends on consumers utility functional form
-	 */
-	public static BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
-		/*
-		 * It is assumed poorest consumer has margUtil = minMargUtil As margUtil > p/q p
-		 * < minMargUtil * q
-		 */
-		BigDecimal minMargUtil = BigDecimal.valueOf(RecessionsHandler.getMinWelfareParamPerceivedByFirms());
-	
-		return quality.multiply(minMargUtil).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
-	
-	}
-
-	/*
-	 * This depends on consumers utility functional form
-	 */
-	public static BigDecimal getMaxPriceToHaveMinimumExpectedDemand(BigDecimal perceivedQ, double knownByPerc) {
-	
-		// The price is calculated for the firm with highest quality, i.e. with no
-		// competing firm from above.
-		// Other firms will have a lower max price, but as it cannot be calculated
-		// analytically the restriction is introduced in the numerical maximization
-		double minWefParam = RecessionsHandler.getMinWelfareParamPerceivedByFirms();
-		double mktSize = Consumers.getMarketSize();
-		double minExpectedDemand = Consumers.getMinExpectedDemand();
-		double lambda = Consumers.getLambda();
-		
-		double maxP = minWefParam * perceivedQ.doubleValue()
-				* FastMath.pow(mktSize * knownByPerc / minExpectedDemand, 1.0 / lambda);
-	
-		return BigDecimal.valueOf(maxP).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
 	}
 
 }

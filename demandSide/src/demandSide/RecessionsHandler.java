@@ -66,6 +66,13 @@ public class RecessionsHandler {
 		return Consumers.getRawMinWelfareParam() * recessionImpact;
 	}
 
+	public static double getWelfareParamPerceivedByFirms(double rawWelfareParam) {
+
+		double recessionImpact = 1 - getRecesMagnitude();
+		return rawWelfareParam * recessionImpact;
+
+	}
+
 	public static double getWelfareParamForConsumers(double rawWelfareParameter) {
 		double recessionImpact = 1 - getRecesMagnitude();
 		return rawWelfareParameter * recessionImpact;
