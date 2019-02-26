@@ -23,7 +23,7 @@ public class OptimalPrice {
 	public static Optional<OptimalPriceResult> get(Firm firm, BigDecimal realQ, ExpectedMarket expMkt) {
 
 		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
-		double cost = firm.getUnitCost(realQ);
+		double cost = Firm.getUnitCost(realQ);
 
 		Neighbors currNeighbors;
 		OptimalPriceResult returnResult = null;
@@ -95,7 +95,7 @@ public class OptimalPrice {
 		assert currNeighbors.getLoPriceLimit().compareTo(currNeighbors.getHiPriceLimit()) < 0;
 
 		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
-		double cost = firm.getUnitCost(realQ);
+		double cost = Firm.getUnitCost(realQ);
 
 		OptimalPriceResult result = new OptimalPriceResult();
 

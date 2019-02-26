@@ -21,7 +21,7 @@ public class ExpectedProfitForMaximization implements UnivariateFunction {
 	public ExpectedProfitForMaximization(Firm firm, BigDecimal realQ, Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		this.perceivedQ = firm.getPerceivedQuality(realQ).doubleValue();
-		this.cost = firm.getUnitCost(realQ);
+		this.cost = Firm.getUnitCost(realQ);
 		this.adjDemand = firm::getAdjustedDemand;
 		this.fixedCost = firm.getFixedCost();
 		this.loOffer = loOf;

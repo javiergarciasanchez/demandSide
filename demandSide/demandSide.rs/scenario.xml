@@ -15,8 +15,9 @@
 <repast.simphony.action.time_series_chart context="Firms_Context" file="repast.simphony.action.time_series_chart_12.xml" />
 <repast.simphony.action.time_series_chart context="Firms_Context" file="repast.simphony.action.time_series_chart_13.xml" />
 <repast.simphony.action.time_series_chart context="Firms_Context" file="repast.simphony.action.time_series_chart_14.xml" />
-<repast.simphony.action.data_set context="Consumers_Context" file="repast.simphony.action.data_set_15.xml" />
+<repast.simphony.action.time_series_chart context="Firms_Context" file="repast.simphony.action.time_series_chart_15.xml" />
 <repast.simphony.action.data_set context="Consumers_Context" file="repast.simphony.action.data_set_16.xml" />
-<repast.simphony.action.time_series_chart context="Consumers_Context" file="repast.simphony.action.time_series_chart_17.xml" />
-<repast.simphony.action.histogram_chart context="Consumers_Context" file="repast.simphony.action.histogram_chart_18.xml" />
+<repast.simphony.action.data_set context="Consumers_Context" file="repast.simphony.action.data_set_17.xml" />
+<repast.simphony.action.time_series_chart context="Consumers_Context" file="repast.simphony.action.time_series_chart_18.xml" />
+<repast.simphony.action.histogram_chart context="Consumers_Context" file="repast.simphony.action.histogram_chart_19.xml" />
 </Scenario>

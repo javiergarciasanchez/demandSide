@@ -1,10 +1,9 @@
 <repast.simphony.data2.engine.DataSetDescriptor simphonyVersion="2.6.0">
-  <name>Consumers</name>
-  <type>NON_AGGREGATE</type>
-  <sourceType>consumers.Consumer</sourceType>
+  <name>AgregConsumers</name>
+  <type>AGGREGATE</type>
   <inclTick>true</inclTick>
-  <inclBatchRun>true</inclBatchRun>
-  <inclRandomSeed>true</inclRandomSeed>
+  <inclBatchRun>false</inclBatchRun>
+  <inclRandomSeed>false</inclRandomSeed>
   <scheduleParams>
     <start>1.0</start>
     <interval>1.0</interval>
@@ -17,51 +16,21 @@
   <atEnd>false</atEnd>
   <methodDataSources class="linked-hash-map">
     <entry>
-      <string>ChosenFirmIntID</string>
+      <string>AvgRealUtil</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>ChosenFirmIntID</id>
-        <className>consumers.Consumer</className>
-        <methodName>getChosenFirmIntID</methodName>
-      </repast.simphony.data2.engine.MethodDataSourceDefinition>
-    </entry>
-    <entry>
-      <string>ConsumerID</string>
-      <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>ConsumerID</id>
-        <className>consumers.Consumer</className>
-        <methodName>getConsumerID</methodName>
-      </repast.simphony.data2.engine.MethodDataSourceDefinition>
-    </entry>
-    <entry>
-      <string>QualityDiscount</string>
-      <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>QualityDiscount</id>
-        <className>consumers.Consumer</className>
-        <methodName>getQualityDiscount</methodName>
-      </repast.simphony.data2.engine.MethodDataSourceDefinition>
-    </entry>
-    <entry>
-      <string>RealUtility</string>
-      <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>RealUtility</id>
+        <id>AvgRealUtil</id>
         <className>consumers.Consumer</className>
         <methodName>getRealUtility</methodName>
+        <aggType>MEAN</aggType>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
-      <string>ExpectedUtility</string>
+      <string>AvgExpUtil</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>ExpectedUtility</id>
+        <id>AvgExpUtil</id>
         <className>consumers.Consumer</className>
         <methodName>getExpectedUtility</methodName>
-      </repast.simphony.data2.engine.MethodDataSourceDefinition>
-    </entry>
-    <entry>
-      <string>RawWelfareParam</string>
-      <repast.simphony.data2.engine.MethodDataSourceDefinition>
-        <id>RawWelfareParam</id>
-        <className>consumers.Consumer</className>
-        <methodName>getRawWelfareParam</methodName>
+        <aggType>MEAN</aggType>
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
   </methodDataSources>

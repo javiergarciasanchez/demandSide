@@ -43,7 +43,7 @@ public class Offer {
 
 		priceScale = (Integer) GetParameter("priceScale");
 		qualityScale = (Integer) GetParameter("qualityScale");
-
+		
 		qualityStep = BigDecimal.valueOf((Double) GetParameter("qualityStep"));
 
 		minDeltaPrice = BigDecimal.ONE.movePointLeft(priceScale).setScale(priceScale);
@@ -66,7 +66,7 @@ public class Offer {
 	}
 
 	public static BigDecimal getMinPrice(Firm f, BigDecimal realQuality) {
-		return getMinPrice(f.getUnitCost(realQuality), f.getPerceivedQuality(realQuality));
+		return getMinPrice(Firm.getUnitCost(realQuality), f.getPerceivedQuality(realQuality));
 	}
 
 	public static boolean equivalentOffers(Optional<Offer> loOf, Optional<Offer> hiOf) {

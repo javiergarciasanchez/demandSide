@@ -36,7 +36,9 @@ public abstract class Firm {
 	private int triedBy = 0;
 
 	// Cost Scale is the same for all firms. It could be changed easily
-	private static double costParameter;
+	private static double costScale;
+	private static double costExponent;
+
 	private static double currentProfitWeight;
 
 	protected static long firmIDCounter;
@@ -46,7 +48,8 @@ public abstract class Firm {
 
 	public static void resetStaticVars() {
 		// resets static variables
-		costParameter = (Double) GetParameter("costParameter");
+		costScale = (Double) GetParameter("costScale");
+		costExponent = (Double) GetParameter("costExponent");
 		currentProfitWeight = (Double) GetParameter("currentProfitWeight");
 		firmIDCounter = 1;
 	}
@@ -283,9 +286,9 @@ public abstract class Firm {
 		return (price - unitCost) * demand - fixedCost;
 	}
 
-	public double getUnitCost(BigDecimal quality) {
+	public static double getUnitCost(BigDecimal quality) {
 		// Cost grows quadratically with quality
-		return FastMath.pow(quality.doubleValue() / costParameter, 2);
+		return costScale * FastMath.pow(quality.doubleValue(), costExponent);
 
 	}
 

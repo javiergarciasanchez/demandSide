@@ -1,7 +1,6 @@
 package firms;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -50,22 +49,22 @@ public class ExpectedMarket extends TreeSet<Firm> {
 				.filter(f -> getPriceToExpel(q, Optional.of(f)).isPresent())
 				.filter(f -> p.compareTo(getPriceToExpel(q, Optional.of(f)).get()) <= 0).collect(Collectors.toList())
 				.forEach(this::remove);
-		
+
 	}
 
 	private double getLoLimit(Firm f) {
-		
+
 		Optional<Offer> loOf = Optional.ofNullable(lower(f)).map(lo -> lo.getPerceivedOffer());
 		Optional<Offer> of = Optional.of(f.getPerceivedOffer());
-		
+
 		return Consumers.limitingWelfareParamPerceivedByFirms(loOf, of);
 	}
 
 	private double getHiLimit(Firm f) {
-		
+
 		Optional<Offer> hiOf = Optional.ofNullable(higher(f)).map(hi -> hi.getPerceivedOffer());
 		Optional<Offer> of = Optional.of(f.getPerceivedOffer());
-		
+
 		return Consumers.limitingWelfareParamPerceivedByFirms(of, hiOf);
 	}
 
@@ -87,9 +86,9 @@ public class ExpectedMarket extends TreeSet<Firm> {
 	/*
 	 * It returns the price below which f is expelled.
 	 * 
-	 * In case any price expels f, it returns empty
+	 * Returns empty if any price expels f
 	 * 
-	 * In case no price expels f it returns 0
+	 * Returns 0 if no price expels f
 	 */
 	public Optional<BigDecimal> getPriceToExpel(BigDecimal q, Optional<Firm> optF) {
 
@@ -101,21 +100,21 @@ public class ExpectedMarket extends TreeSet<Firm> {
 			return Optional.empty();
 
 		BigDecimal firmPerceivedQ = f.getPerceivedQuality();
-		BigDecimal retval;
+		Optional<BigDecimal> retval;
 
 		if (q.compareTo(firmPerceivedQ) == 0)
 			// Any price below f's price expels f
-			retval = f.getPrice();
+			retval = Optional.of(f.getPrice().subtract(Offer.getMinDeltaPrice()));
 
 		else if (q.compareTo(firmPerceivedQ) > 0)
-			
-			retval = UtilityFunction.priceToExpelFromAbove(q, f, Optional.ofNullable(lower(f)));
-		
-		else
-			retval = UtilityFunction.priceToExpelFromBelow(q, f, Optional.ofNullable(higher(f)));		
 
-		// It rounds downward to make sure the price returned would expel f
-		return Optional.of(retval.setScale(Offer.getPriceScale(), RoundingMode.FLOOR));
+			retval = UtilityFunction.priceToExpelFromAbove(q, f, Optional.ofNullable(lower(f)));
+
+		else
+			retval = Optional.of(UtilityFunction.priceToExpelFromBelow(q, f, Optional.ofNullable(higher(f))));
+
+		return retval;
+
 	}
 
 }

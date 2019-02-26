@@ -5,10 +5,12 @@ import firms.Firm;
 import firms.Firms;
 import firms.Offer;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import consumers.Consumer;
 import consumers.Consumers;
+import consumers.UtilityFunction;
 import repast.simphony.context.Context;
 import repast.simphony.context.DefaultContext;
 import repast.simphony.dataLoader.ContextBuilder;
@@ -16,8 +18,7 @@ import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.environment.RunState;
 import repast.simphony.random.RandomHelper;
 
-public class Market extends DefaultContext<Object> implements
-		ContextBuilder<Object> {
+public class Market extends DefaultContext<Object> implements ContextBuilder<Object> {
 
 	// Defining market components: consumers and firms
 	public static Consumers consumers;
@@ -26,12 +27,13 @@ public class Market extends DefaultContext<Object> implements
 
 	public static ArrayList<Firm> toBeKilled;
 
+	public static PrintWriter out;
+
 	@Override
-	public Context<Object> build(Context<Object> context) {		
-		
+	public Context<Object> build(Context<Object> context) {
+
 		if (RunEnvironment.getInstance().isBatch())
 			System.out.println("Run: " + RunState.getInstance().getRunInfo().getRunNumber());
-
 
 		// Reset seed
 		RandomHelper.setSeed((Integer) GetParameter("randomSeed"));
@@ -42,6 +44,7 @@ public class Market extends DefaultContext<Object> implements
 		// Reset static variables
 		Consumer.resetStaticVars();
 		Consumers.resetStaticVars();
+		UtilityFunction.resetStaticVars();
 		Firm.resetStaticVars();
 		Firms.resetStaticVars();
 		Offer.resetStaticVars();
@@ -66,6 +69,5 @@ public class Market extends DefaultContext<Object> implements
 		return context;
 
 	}
-
 
 }

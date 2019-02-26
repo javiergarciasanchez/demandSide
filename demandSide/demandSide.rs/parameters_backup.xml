@@ -30,6 +30,12 @@
 						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
 									
 		/>
+				<parameter name="costScale" displayName="Cost parameter to adjust scale" type="double" 
+						defaultValue="0.01" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+									
+		/>
 				<parameter name="recessionDuration" displayName="Recessions Duration (sep by :  - colon)" type="java.lang.String" 
 						defaultValue="3" 
 						isReadOnly="false" 
@@ -50,6 +56,12 @@
 		/>
 				<parameter name="qualityStep" displayName="Quality Step per Period" type="double" 
 						defaultValue="1.0" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+									
+		/>
+				<parameter name="utilityQualityExponent" displayName="Utility function Quality Exponent" type="double" 
+						defaultValue="0.5" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									
@@ -138,20 +150,14 @@
 						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
 		/>
-				<parameter name="maxQuality" displayName="Maximum possible Quality" type="int" 
-						defaultValue="1000000" 
-						isReadOnly="false" 
-						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
-									
-		/>
 				<parameter name="currentProfitWeight" displayName="Weight of Current Profit in Auto regressive average" type="double" 
 						defaultValue="0.8" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									
 		/>
-				<parameter name="costParameter" displayName="Cost parameter" type="double" 
-						defaultValue="10.0" 
+				<parameter name="costExponent" displayName="Cost function Quality Exponent" type="double" 
+						defaultValue="2.0" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									
@@ -160,12 +166,6 @@
 						defaultValue="0.9998" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
-									
-		/>
-				<parameter name="maxPrice" displayName="Maximum possible Price" type="int" 
-						defaultValue="1000000000" 
-						isReadOnly="false" 
-						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
 									
 		/>
 		</parameters>

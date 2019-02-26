@@ -67,10 +67,8 @@ public class RecessionsHandler {
 	}
 
 	public static double getWelfareParamPerceivedByFirms(double rawWelfareParam) {
-
 		double recessionImpact = 1 - getRecesMagnitude();
 		return rawWelfareParam * recessionImpact;
-
 	}
 
 	public static double getWelfareParamForConsumers(double rawWelfareParameter) {
