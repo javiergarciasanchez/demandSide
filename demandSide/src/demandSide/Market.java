@@ -27,6 +27,8 @@ public class Market extends DefaultContext<Object> implements ContextBuilder<Obj
 
 	public static ArrayList<Firm> toBeKilled;
 
+	public static int seed;
+	
 	public static PrintWriter out;
 
 	@Override
@@ -37,6 +39,8 @@ public class Market extends DefaultContext<Object> implements ContextBuilder<Obj
 
 		// Reset seed
 		RandomHelper.setSeed((Integer) GetParameter("randomSeed"));
+		seed = (Integer) GetParameter("randomSeed");
+		
 
 		// Set end of run
 		RunEnvironment.getInstance().endAt((Double) GetParameter("stopAt"));

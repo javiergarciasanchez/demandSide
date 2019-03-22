@@ -68,7 +68,7 @@ public class Consumer {
 		// 1.0 could not being assigned because a value of 1.0 is considered
 		// the consumer has already tried the firm
 		qualityDiscount = Consumers.getQualityDicountDistrib().nextDouble();
-
+		
 		if (getQualityDiscount() == 1.0)
 			qualityDiscount = FastMath.nextDown(getQualityDiscount());
 

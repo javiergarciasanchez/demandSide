@@ -8,11 +8,13 @@ import java.util.Optional;
 import org.apache.commons.math3.util.FastMath;
 
 import cern.jet.random.Beta;
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
+import demandSide.Market;
 import demandSide.RecessionsHandler;
 import firms.Firm;
 import firms.Offer;
 import repast.simphony.context.DefaultContext;
-import repast.simphony.random.RandomHelper;
 
 public class Consumers extends DefaultContext<Consumer> {
 
@@ -57,8 +59,10 @@ public class Consumers extends DefaultContext<Consumer> {
 		double mode = (Double) GetParameter("qualityDiscountMostLikely");
 		double alpha = mean * (1 - 2 * mode) / (mean - mode);
 		double beta = alpha * (1 - mean) / mean;
-		qualityDiscountDistrib = RandomHelper.createBeta(alpha, beta);
-
+//		qualityDiscountDistrib = RandomHelper.createBeta(alpha, beta);
+		
+		RandomEngine engine = new MersenneTwister(Market.seed);
+		qualityDiscountDistrib = new Beta(alpha, beta, engine);
 	}
 
 	public static Pareto getWelfareParamDistrib() {

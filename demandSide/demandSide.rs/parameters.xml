@@ -49,7 +49,7 @@
 									
 		/>
 				<parameter name="qualityDiscountMostLikely" displayName="Quality Discount: Most Likely value" type="double" 
-						defaultValue="0.9999" 
+						defaultValue="0.8" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									
@@ -91,7 +91,7 @@
 									
 		/>
 				<parameter name="recessionMagnitude" displayName="Recessions Magnitude (sep by :  - colon)" type="java.lang.String" 
-						defaultValue="0.0" 
+						defaultValue="0.3" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter"
 									
@@ -103,7 +103,7 @@
 									
 		/>
 				<parameter name="recessionStart" displayName="Recessions Start (sep by :  - colon)" type="java.lang.String" 
-						defaultValue="25" 
+						defaultValue="70" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter"
 									
@@ -163,7 +163,7 @@
 									
 		/>
 				<parameter name="qualityDiscountMean" displayName="Quality Discount: Mean" type="double" 
-						defaultValue="0.9998" 
+						defaultValue="0.7" 
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 									

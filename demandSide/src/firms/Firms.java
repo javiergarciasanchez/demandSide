@@ -11,12 +11,13 @@ import firmTypes.FirmTypes;
 
 import cern.jet.random.Gamma;
 import cern.jet.random.Uniform;
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import repast.simphony.context.DefaultContext;
 import repast.simphony.engine.schedule.ScheduledMethod;
-import repast.simphony.random.RandomHelper;
 import repast.simphony.essentials.RepastEssentials;
 
 public class Firms extends DefaultContext<Firm> {
@@ -24,6 +25,8 @@ public class Firms extends DefaultContext<Firm> {
 	// Random distributions
 	public Uniform firmTypes;
 	private Gamma fixedCostDistrib;
+	private Uniform initialQualityDistrib;
+	private Uniform getFromIgnoranceDistrib;
 
 	// Parameters for Firms
 	static double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
@@ -78,10 +81,22 @@ public class Firms extends DefaultContext<Firm> {
 		stdDevPercent = (Double) GetParameter("fixedCostStdDevPerc");
 		alfa = (1 / FastMath.pow(stdDevPercent, 2));
 		lamda = alfa / mean;
-		fixedCostDistrib = RandomHelper.createGamma(alfa, lamda);
-
-		firmTypes = RandomHelper.createUniform(1, FirmTypes.values().length);
-
+//		fixedCostDistrib = RandomHelper.createGamma(alfa, lamda);
+		
+		RandomEngine engine = new MersenneTwister(Market.seed);
+		fixedCostDistrib = new Gamma(alfa, lamda, engine);
+		
+//		firmTypes = RandomHelper.createUniform(1, FirmTypes.values().length);
+		engine = new MersenneTwister(Market.seed);
+		firmTypes = new Uniform(1, FirmTypes.values().length, engine);
+		
+		
+		double maxIniQ = (double) GetParameter("maxInitialQuality");
+		engine = new MersenneTwister(Market.seed);
+		initialQualityDistrib = new Uniform(0.0, maxIniQ, engine);
+				
+		engine = new MersenneTwister(Market.seed);
+		getFromIgnoranceDistrib =new Uniform(engine);
 	}
 
 	public void createFirmLists() {
@@ -105,10 +120,6 @@ public class Firms extends DefaultContext<Firm> {
 
 		firmsByQ.remove(f.getQuality());
 
-	}
-
-	public Gamma getFixedCostDistrib() {
-		return fixedCostDistrib;
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.ADD_FIRMS_PRIORITY, interval = 1)
@@ -145,6 +156,18 @@ public class Firms extends DefaultContext<Firm> {
 	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_STATISTICS, interval = 1)
 	public void updateStatistics() {
 		marketStats = stream().collect(MarketStats::new, MarketStats::accumulate, MarketStats::combine);
+	}
+
+	public Gamma getFixedCostDistrib() {
+		return fixedCostDistrib;
+	}
+
+	public Uniform getGetFromIgnoranceDistrib() {
+		return getFromIgnoranceDistrib;
+	}
+
+	public Uniform getInitialQualityDistrib() {
+		return initialQualityDistrib;
 	}
 
 	@SuppressWarnings("unchecked")

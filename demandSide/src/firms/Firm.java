@@ -18,7 +18,6 @@ import firmTypes.FirmTypes;
 import optimalPrice.OptimalPrice;
 import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.essentials.RepastEssentials;
-import repast.simphony.random.RandomHelper;
 
 public abstract class Firm {
 
@@ -91,10 +90,8 @@ public abstract class Firm {
 
 	private Optional<BigDecimal> getRandomQuality() {
 
-		double maxIniQ = (double) GetParameter("maxInitialQuality");
-		BigDecimal q = BigDecimal.valueOf(RandomHelper.nextDoubleFromTo(0.0, maxIniQ));
-
-		return getClosestAvailableQuality(q);
+		double doubleQ = Market.firms.getInitialQualityDistrib().nextDouble();
+		return getClosestAvailableQuality(BigDecimal.valueOf(doubleQ));
 	}
 
 	public Optional<BigDecimal> getClosestAvailableQuality(BigDecimal q) {
@@ -249,7 +246,7 @@ public abstract class Firm {
 
 		for (int k = 0; (k < amount) && !notYetKnownBy.isEmpty(); k++) {
 
-			int i = RandomHelper.getUniform().nextIntFromTo(0, notYetKnownBy.size() - 1);
+			int i = Market.firms.getGetFromIgnoranceDistrib().nextIntFromTo(0, notYetKnownBy.size() - 1);
 
 			c = notYetKnownBy.get(i);
 			notYetKnownBy.remove(i);

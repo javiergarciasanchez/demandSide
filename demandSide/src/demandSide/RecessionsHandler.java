@@ -3,7 +3,6 @@ package demandSide;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
-import consumers.Consumers;
 import repast.simphony.context.Context;
 import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
@@ -61,14 +60,9 @@ public class RecessionsHandler {
 
 	}
 
-	public static double getMinWelfareParamPerceivedByFirms() {
-		double recessionImpact = 1 - getRecesMagnitude();
-		return Consumers.getMinRawWelfareParam() * recessionImpact;
-	}
-
 	public static double getWelfareParamPerceivedByFirms(double rawWelfareParam) {
 		double recessionImpact = 1 - getRecesMagnitude();
-		return rawWelfareParam * recessionImpact;
+		return rawWelfareParam / recessionImpact;
 	}
 
 	public static double getWelfareParamForConsumers(double rawWelfareParameter) {
