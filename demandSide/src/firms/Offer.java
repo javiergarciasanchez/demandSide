@@ -6,19 +6,26 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
-import consumers.Consumers;
-import demandSide.Market;
-
 public class Offer {
-
-	private static int priceScale, qualityScale;
+	
+	private static int priceScale;
+	private static int qualityScale;
 	private static BigDecimal qualityStep;
-	private static BigDecimal minDeltaPrice, minDeltaQuality;
+	private static BigDecimal minDeltaPrice;
+	private static BigDecimal minDeltaQuality;
 
 	private BigDecimal quality = BigDecimal.ZERO;
 	private BigDecimal price = BigDecimal.ZERO;
+	
+	public static void readOffersParams() {
+		priceScale = (Integer) GetParameter("priceScale");
+		qualityScale = (Integer) GetParameter("qualityScale");
+		
+		qualityStep = BigDecimal.valueOf((Double) GetParameter("qualityStep"));
 
-	public Offer() {
+		minDeltaPrice = BigDecimal.ONE.movePointLeft(priceScale).setScale(priceScale);
+		minDeltaQuality = BigDecimal.ONE.movePointLeft(qualityScale).setScale(qualityScale);
+
 	}
 
 	public Offer(BigDecimal p, BigDecimal q) {
@@ -39,36 +46,6 @@ public class Offer {
 		setPrice(BigDecimal.valueOf(priceD));
 	}
 
-	public static void resetStaticVars() {
-
-		priceScale = (Integer) GetParameter("priceScale");
-		qualityScale = (Integer) GetParameter("qualityScale");
-		
-		qualityStep = BigDecimal.valueOf((Double) GetParameter("qualityStep"));
-
-		minDeltaPrice = BigDecimal.ONE.movePointLeft(priceScale).setScale(priceScale);
-		minDeltaQuality = BigDecimal.ONE.movePointLeft(qualityScale).setScale(qualityScale);
-
-	}
-
-	public static BigDecimal getMinQuality() {
-		return getMinDeltaQuality();
-	}
-
-	public static BigDecimal getMinPrice(double cost, BigDecimal perceivedQ) {
-		// Should be higher than cost
-		BigDecimal costPlus = (BigDecimal.valueOf(cost)).add(minDeltaPrice);
-
-		// Shouldn't be lower than the price needed to catch poorest consumer
-		BigDecimal pricePoorest = Consumers.getMaxPriceForPoorestConsumer(perceivedQ);
-
-		return costPlus.max(pricePoorest).setScale(getPriceScale(), RoundingMode.CEILING);
-	}
-
-	public static BigDecimal getMinPrice(Firm f, BigDecimal realQuality) {
-		return getMinPrice(Firm.getUnitCost(realQuality), f.getPerceivedQuality(realQuality));
-	}
-
 	public static boolean equivalentOffers(Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		if ((!loOf.isPresent()) && (!hiOf.isPresent()))
@@ -79,52 +56,6 @@ public class Offer {
 			// of1 and of2 both present
 			return ((loOf.get().getPrice().compareTo(hiOf.get().getPrice()) == 0)
 					&& (loOf.get().getQuality().compareTo(hiOf.get().getQuality()) == 0));
-	}
-
-	public static Optional<BigDecimal> getDownWardClosestAvailableQuality(BigDecimal q) {
-		BigDecimal minQ = getMinQuality();
-
-		// Search an available quality moving down
-		while (Market.firms.firmsByQ.containsKey(q) && q.compareTo(minQ) > 0) {
-			q = q.subtract(minDeltaQuality);
-		}
-
-		if (Market.firms.firmsByQ.containsKey(q))
-			return Optional.empty();
-		else
-			return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
-
-	}
-
-	public static Optional<BigDecimal> getUpWardClosestAvailableQuality(BigDecimal q) {
-
-		// Search an available quality moving upward
-		while (Market.firms.firmsByQ.containsKey(q)) {
-			q = q.add(minDeltaQuality);
-		}
-
-		return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
-
-	}
-
-	public static BigDecimal getMinDeltaPrice() {
-		return minDeltaPrice;
-	}
-
-	public static BigDecimal getMinDeltaQuality() {
-		return minDeltaQuality;
-	}
-
-	public static BigDecimal getQualityStep() {
-		return qualityStep;
-	}
-
-	public static int getPriceScale() {
-		return priceScale;
-	}
-
-	public static int getQualityScale() {
-		return qualityScale;
 	}
 
 	public static RoundingMode getPriceRounding() {
@@ -151,6 +82,26 @@ public class Offer {
 
 		this.price = p.setScale(getPriceScale(), getPriceRounding());
 
+	}
+	
+	public static BigDecimal getMinDeltaPrice() {
+		return minDeltaPrice;
+	}
+
+	public static BigDecimal getMinDeltaQuality() {
+		return minDeltaQuality;
+	}
+
+	public static BigDecimal getQualityStep() {
+		return qualityStep;
+	}
+
+	public static int getPriceScale() {
+		return priceScale;
+	}
+
+	public static int getQualityScale() {
+		return qualityScale;
 	}
 
 	public void setPrice(double p) {

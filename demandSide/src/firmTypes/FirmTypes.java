@@ -10,31 +10,31 @@ public enum FirmTypes {
 	NO_Q_INCREASE_FIRM,
 	INCREASE_Q_FIRM;
 	
-	public static void createRandomTypeFirm() {
+	public void createRandomTypeFirm(Market market) {
 		
-		int i = Market.firms.firmTypes.nextInt() - 1;
+		int i = market.firms.firmTypes.nextInt() - 1;
 		
-		(values()[i]).createFirm();
+		(values()[i]).createFirm(market);
 		
 	}
 	
-	public void createFirm(){
+	public void createFirm(Market market){
 		
 		switch (this) {
 		case STANDARD_FIRM:
-			new StandardFirm();
+			new StandardFirm(market);
 			break;
 		case NO_Q_CHANGE_FIRM:
-			new NoQChangeFirm();
+			new NoQChangeFirm(market);
 			break;
 		case NO_Q_REDUCTION_FIRM:
-			new NoQReductionFirm();
+			new NoQReductionFirm(market);
 			break;
 		case NO_Q_INCREASE_FIRM:
-			new NoQIncreaseFirm();
+			new NoQIncreaseFirm(market);
 			break;
 		case INCREASE_Q_FIRM:
-			new IncreaseQFirm();
+			new IncreaseQFirm(market);
 			break;
 		}
 		

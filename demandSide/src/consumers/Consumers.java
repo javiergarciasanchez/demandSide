@@ -3,6 +3,7 @@ package consumers;
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
@@ -18,89 +19,90 @@ import repast.simphony.context.DefaultContext;
 
 public class Consumers extends DefaultContext<Consumer> {
 
+	private Market market;
+
 	// Distribution of consumer's utility parameters
-	// This variables are static to access them easily
-	// Are initialized in constructor without problem because
-	// only one instance is always created
-	private static double rawMinWelfareParam;
-	private static double lambda;
-	private static double probabilityForRichestConsumer;
+	private double rawMinWelfareParam;
+	private double lambda;
+	private Pareto welfareParamDistrib;
+	private Beta qualityDiscountDistrib;
 
-	private static Pareto welfareParamDistrib;
-	private static Beta qualityDiscountDistrib;
-	private static int mktSize;
+	// Other parameters
+	private double probabilityForRichestConsumer;
+	private int mktSize;
 
-	public static void resetStaticVars() {
+	public Consumers(Market market) {
+		super("Consumers_Context");
 
-		rawMinWelfareParam = (double) GetParameter("minWelfareParam");
-		welfareParamDistrib = null;
-		qualityDiscountDistrib = null;
-		double gini = (double) GetParameter("gini");
-		lambda = (1.0 + gini) / (2.0 * gini);
+		this.market = market;
+
+		// read Parameters
 		mktSize = (int) GetParameter("numberOfConsumers");
 		probabilityForRichestConsumer = (double) GetParameter("richestProbability");
-
-	}
-
-	public Consumers() {
-		super("Consumers_Context");
 
 		createProbabilityDistrib();
 
 	}
 
-	private static void createProbabilityDistrib() {
+	private void createProbabilityDistrib() {
 
-		// Welfare Param
+
+		// Welfare Parameter Distribution
+		rawMinWelfareParam = (double) GetParameter("minWelfareParam");
+
+		double gini = (double) GetParameter("gini");
+		lambda = (1.0 + gini) / (2.0 * gini);
+		
 		welfareParamDistrib = Pareto.getPareto(lambda, rawMinWelfareParam);
 
-		// Quality Discount
+		
+		// Quality Discount Distribution
 		double mean = (Double) GetParameter("qualityDiscountMean");
 		double mode = (Double) GetParameter("qualityDiscountMostLikely");
 		double alpha = mean * (1 - 2 * mode) / (mean - mode);
 		double beta = alpha * (1 - mean) / mean;
 //		qualityDiscountDistrib = RandomHelper.createBeta(alpha, beta);
-		
+
 		RandomEngine engine = new MersenneTwister(Market.seed);
 		qualityDiscountDistrib = new Beta(alpha, beta, engine);
 	}
 
-	public static Pareto getWelfareParamDistrib() {
+	public Pareto getWelfareParamDistrib() {
 		return welfareParamDistrib;
 	}
 
-	public static Beta getQualityDicountDistrib() {
+	public Beta getQualityDicountDistrib() {
 		return qualityDiscountDistrib;
 	}
 
-	public static int getMarketSize() {
+	public int getMarketSize() {
 		return mktSize;
 	}
 
-	public static double getLambda() {
+	public double getLambda() {
 		return lambda;
 	}
 
 	public static double getMinRawWelfareParam() {
-		return rawMinWelfareParam;
+		return (double) GetParameter("minWelfareParam");
 	}
 
-	public static void createConsumers() {
+	public void createConsumers() {
 
 		for (int i = 1; i <= (Integer) GetParameter("numberOfConsumers"); i++) {
-			new Consumer();
+			new Consumer(market);
 		}
 
 	}
 
-	public static double getExpectedQuantity(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
+	public double getExpectedQuantity(Offer segOffer, Optional<Offer> loOffer, Optional<Offer> hiOffer) {
 
 		double demandAboveLoLimit, demandAboveHiLimit;
 
-		demandAboveLoLimit = getExpectedConsumersAbove(
-				Consumers.limitingWelfareParamPerceivedByFirms(loOffer, Optional.of(segOffer)));
-		demandAboveHiLimit = getExpectedConsumersAbove(
-				Consumers.limitingWelfareParamPerceivedByFirms(Optional.of(segOffer), hiOffer));
+		demandAboveLoLimit = getExpectedConsumersAboveRawWelfareParam(
+				limitingWelfareParamPerceivedByFirms(loOffer, Optional.of(segOffer)));
+		demandAboveHiLimit = getExpectedConsumersAboveRawWelfareParam(
+				limitingWelfareParamPerceivedByFirms(Optional.of(segOffer), hiOffer));
 
 		if (demandAboveLoLimit > demandAboveHiLimit)
 			return demandAboveLoLimit - demandAboveHiLimit;
@@ -113,14 +115,14 @@ public class Consumers extends DefaultContext<Consumer> {
 	 * This function depends on the assumption of Pareto distribution of welfare
 	 * parameter
 	 */
-	private static double getExpectedConsumersAbove(double welfareParameter) {
+	private double getExpectedConsumersAboveRawWelfareParam(double rawWelfareParameter) {
 
-		if (welfareParameter <= rawMinWelfareParam)
+		if (rawWelfareParameter <= rawMinWelfareParam)
 			return mktSize;
-		else if (welfareParameter == Double.POSITIVE_INFINITY)
+		else if (rawWelfareParameter == Double.POSITIVE_INFINITY)
 			return 0.;
 		else
-			return mktSize * FastMath.pow(rawMinWelfareParam / welfareParameter, lambda);
+			return mktSize * FastMath.pow(rawMinWelfareParam / rawWelfareParameter, lambda);
 
 	}
 
@@ -134,15 +136,15 @@ public class Consumers extends DefaultContext<Consumer> {
 	 * 
 	 * When there is no limit, function returns POSITIVE_INFINITY
 	 */
-	public static double limitingWelfareParamPerceivedByFirms(Optional<Offer> loOf, Optional<Offer> hiOf) {
+	public double limitingWelfareParamPerceivedByFirms(Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		assert !Offer.equivalentOffers(loOf, hiOf) : "Offers should be different";
-		
-		if (!hiOf.isPresent())
+
+		if (hiOf.isEmpty())
 			// If there is no higher Offer there is no limit
 			return Double.POSITIVE_INFINITY;
 
-		else if (!loOf.isPresent())
+		else if (loOf.isEmpty())
 			// If there is no lower Offer the limit is determined by the minimum welfare
 			// param
 			return UtilityFunction.getMinWelfareParamAceptingOfferPerceivedByFirms(hiOf.get());
@@ -162,7 +164,7 @@ public class Consumers extends DefaultContext<Consumer> {
 	 * Returns positive infinity if no consumer would choose higher offer
 	 * 
 	 */
-	private static double limitingWelfareParamPerceivedByFirms(Offer loOf, Offer hiOf) {
+	private double limitingWelfareParamPerceivedByFirms(Offer loOf, Offer hiOf) {
 
 		assert (loOf != null) && (hiOf != null);
 
@@ -176,7 +178,7 @@ public class Consumers extends DefaultContext<Consumer> {
 		hiP = hiOf.getPrice();
 
 		assert (loQ.compareTo(hiQ) <= 0);
-		
+
 		double minRawWP = getMinRawWelfareParam();
 
 		if (loP.compareTo(hiP) >= 0)
@@ -188,13 +190,13 @@ public class Consumers extends DefaultContext<Consumer> {
 			return Double.POSITIVE_INFINITY;
 
 		} else {
-			double rawWP = FastMath.max(minRawWP, UtilityFunction.calculateRawLimit(loP, loQ, hiP, hiQ)); 
+			double rawWP = FastMath.max(minRawWP, UtilityFunction.calculateRawLimit(loP, loQ, hiP, hiQ));
 			return RecessionsHandler.getWelfareParamPerceivedByFirms(rawWP);
 		}
 
 	}
 
-	public static BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
+	public BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
 
 		double rawPoorestWP = getMinRawWelfareParam();
 		double poorestWelfareParam = RecessionsHandler.getWelfareParamPerceivedByFirms(rawPoorestWP);
@@ -203,7 +205,7 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public static BigDecimal getMaxPriceForRichestConsumer(Firm f, BigDecimal perceivedQ) {
+	public BigDecimal getMaxPriceForRichestConsumer(Firm f, BigDecimal perceivedQ) {
 
 		double rawRichestWP = getRawMaxWelfareParamForRichestConsumer(f);
 		double richestWelfareParam = RecessionsHandler.getWelfareParamPerceivedByFirms(rawRichestWP);
@@ -215,7 +217,7 @@ public class Consumers extends DefaultContext<Consumer> {
 	 * Calculates the maximum raw welfare parameter that guarantees at least one
 	 * consumer with probability given as parameter
 	 */
-	private static double getRawMaxWelfareParamForRichestConsumer(Firm f) {
+	private double getRawMaxWelfareParamForRichestConsumer(Firm f) {
 
 		double adjMktSize = f.getAdjustedDemand(mktSize);
 
@@ -223,6 +225,50 @@ public class Consumers extends DefaultContext<Consumer> {
 		tmp = Math.pow(1 - tmp, 1 / lambda);
 
 		return rawMinWelfareParam / tmp;
+
+	}
+
+	public BigDecimal getMinPrice(double cost, BigDecimal perceivedQ) {
+		// Should be higher than cost
+		BigDecimal costPlus = (BigDecimal.valueOf(cost)).add(Offer.getMinDeltaPrice());
+
+		// Shouldn't be lower than the price needed to catch poorest consumer
+		BigDecimal pricePoorest = getMaxPriceForPoorestConsumer(perceivedQ);
+
+		return costPlus.max(pricePoorest).setScale(Offer.getPriceScale(), RoundingMode.CEILING);
+	}
+
+	public BigDecimal getMinPrice(Firm f, BigDecimal realQuality) {
+		return getMinPrice(f.getUnitCost(realQuality), f.getPerceivedQuality(realQuality));
+	}
+
+	public BigDecimal getMinQuality() {
+		return Offer.getMinDeltaQuality();
+	}
+
+	public Optional<BigDecimal> getDownWardClosestAvailableQuality(BigDecimal q) {
+		BigDecimal minQ = getMinQuality();
+
+		// Search an available quality moving down
+		while (market.firms.firmsByQ.containsKey(q) && q.compareTo(minQ) > 0) {
+			q = q.subtract(Offer.getMinDeltaQuality());
+		}
+
+		if (market.firms.firmsByQ.containsKey(q))
+			return Optional.empty();
+		else
+			return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
+
+	}
+
+	public Optional<BigDecimal> getUpWardClosestAvailableQuality(BigDecimal q) {
+
+		// Search an available quality moving upward
+		while (market.firms.firmsByQ.containsKey(q)) {
+			q = q.add(Offer.getMinDeltaQuality());
+		}
+
+		return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
 
 	}
 

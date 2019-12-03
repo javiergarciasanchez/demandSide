@@ -1,6 +1,7 @@
 package consumers;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.lang.Double;
@@ -17,9 +18,12 @@ import repast.simphony.engine.schedule.ScheduledMethod;
 
 public class Consumer {
 
+	private Market market;
+
 	private double rawWelfareParam;
 	private double qualityDiscount;
 	private Optional<Firm> chosenFirm;
+	private ExpectedUtilityComparator expUtilComp;
 
 	// This map collects the known firms, and provides a quality factor
 	// Quality factor is a discount in case consumer has not yet tried the firm
@@ -30,20 +34,22 @@ public class Consumer {
 	protected long consumerIntID = consumerIDCounter++;
 	protected String ID = "Cons. " + consumerIntID;
 
-	public static void resetStaticVars() {
-		// resets static variables
+	public static void resetCounter() {
 		consumerIDCounter = 1;
 	}
 
-	public Consumer() {
+	public Consumer(Market market) {
+		this.market = market;
 
-		Market.consumers.add(this);
+		market.consumers.add(this);
 
 		chosenFirm = Optional.empty();
 
 		knownFirmsQualityFactor = new HashMap<Firm, Double>();
 
 		assignPreferences();
+
+		expUtilComp = new ExpectedUtilityComparator(this);
 
 	}
 
@@ -60,15 +66,15 @@ public class Consumer {
 
 	private void setRawWelfareParam() {
 
-		rawWelfareParam = Consumers.getWelfareParamDistrib().nextDouble();
+		rawWelfareParam = market.consumers.getWelfareParamDistrib().nextDouble();
 
 	}
 
 	private void setQualityDiscount() {
 		// 1.0 could not being assigned because a value of 1.0 is considered
 		// the consumer has already tried the firm
-		qualityDiscount = Consumers.getQualityDicountDistrib().nextDouble();
-		
+		qualityDiscount = market.consumers.getQualityDicountDistrib().nextDouble();
+
 		if (getQualityDiscount() == 1.0)
 			qualityDiscount = FastMath.nextDown(getQualityDiscount());
 
@@ -125,6 +131,15 @@ public class Consumer {
 			}
 		}
 
+		Optional<Firm> maxUtilFirm2;
+		maxUtilFirm2 = knownFirmsQualityFactor.entrySet().stream()
+				.max(expUtilComp).filter(kF->expectedUtility(kF)>0.0).
+				map(Map.Entry::getKey);
+		
+		
+
+		assert(maxUtilFirm.equals(maxUtilFirm2));
+		
 		// if no firm was chosen maxUtilFirm would be empty
 		return maxUtilFirm;
 
@@ -137,13 +152,22 @@ public class Consumer {
 		return UtilityFunction.expectedUtility(welfareParam, f.getOffer(), qualityFactor);
 	}
 
+	public double expectedUtility(Entry<Firm, Double> knownFirm) {
+		
+		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
+
+		Firm f = knownFirm.getKey();
+		double qualityFactor = knownFirm.getValue();
+		return UtilityFunction.expectedUtility(welfareParam, f.getOffer(), qualityFactor);
+	}
+
 	private double realUtility(Firm f) {
 
 		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
 
 		return UtilityFunction.realUtility(welfareParam, f.getOffer());
 	}
-	
+
 	public void removeTraceOfFirm(Firm firm) {
 		knownFirmsQualityFactor.remove(firm);
 
@@ -158,7 +182,6 @@ public class Consumer {
 		return rawWelfareParam;
 	}
 
-	
 	//
 	// Procedures for inspecting values
 	//

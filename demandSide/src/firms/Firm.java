@@ -21,7 +21,10 @@ import repast.simphony.essentials.RepastEssentials;
 
 public abstract class Firm {
 
+	public Market market;
+
 	private Decision decision;
+	private History history;
 	private int demand = 0;
 	private double profit = 0.0;
 
@@ -34,37 +37,30 @@ public abstract class Firm {
 	private ArrayList<Consumer> notYetKnownBy;
 	private int triedBy = 0;
 
-	// Cost Scale is the same for all firms. It could be changed easily
-	private static double costScale;
-	private static double costExponent;
-
-	private static double currentProfitWeight;
-
 	protected static long firmIDCounter;
 
 	private long firmIntID = firmIDCounter++;
 	private String ID = "Firm_" + firmIntID;
 
-	public static void resetStaticVars() {
-		// resets static variables
-		costScale = (Double) GetParameter("costScale");
-		costExponent = (Double) GetParameter("costExponent");
-		currentProfitWeight = (Double) GetParameter("currentProfitWeight");
+	public static void resetCounter() {
 		firmIDCounter = 1;
 	}
 
-	public Firm() {
+	public Firm(Market market) {
+		this.market = market;
 
-		Market.firms.add(this);
+		market.firms.add(this);
 
 		notYetKnownBy = new ArrayList<Consumer>();
 
-		fixedCost = (Double) Market.firms.getFixedCostDistrib().nextDouble();
+		fixedCost = (Double) market.firms.getFixedCostDistrib().nextDouble();
 
 		born = RepastEssentials.GetTickCount();
 
+		history = new History(market);
+
 		if (!makeInitialOffer())
-			Market.firms.remove(this);
+			market.firms.remove(this);
 
 	}
 
@@ -90,16 +86,16 @@ public abstract class Firm {
 
 	private Optional<BigDecimal> getRandomQuality() {
 
-		double doubleQ = Market.firms.getInitialQualityDistrib().nextDouble();
+		double doubleQ = market.firms.getInitialQualityDistrib().nextDouble();
 		return getClosestAvailableQuality(BigDecimal.valueOf(doubleQ));
 	}
 
 	public Optional<BigDecimal> getClosestAvailableQuality(BigDecimal q) {
 
 		// If quality is occupied it tries first upward then downward
-		Optional<BigDecimal> up = Offer.getUpWardClosestAvailableQuality(q);
+		Optional<BigDecimal> up = market.consumers.getUpWardClosestAvailableQuality(q);
 
-		return (up.isPresent() ? up : Offer.getDownWardClosestAvailableQuality(q));
+		return (up.isPresent() ? up : market.consumers.getDownWardClosestAvailableQuality(q));
 
 	}
 
@@ -107,7 +103,7 @@ public abstract class Firm {
 		assert d != null;
 
 		decision = d;
-		Market.firms.addToFirmLists(this);
+		market.firms.addToFirmLists(this);
 		initializeConsumerKnowledge();
 	}
 
@@ -119,10 +115,13 @@ public abstract class Firm {
 	@ScheduledMethod(start = 1, priority = RunPriority.MAKE_OFFER_PRIORITY, interval = 1, shuffle = true)
 	public void makeOffer() {
 
+		// Update competitors expected offers
+		history.updateCompetitorsPerceivedOffers(getQuality());
+
 		// Gets possible quality options
 		// Then gets the optimal price for each quality option
 		// Gets the best decision according to expected profit
-		// If there is a valid new decision updates it decision otherwise keeps previous
+		// If there is a valid new decision, updates its decision otherwise keeps previous
 		// one
 		getRealQualityOptions().map(q -> getOptPriceDecision(q)).max(new DecisionComparator())
 				.ifPresent(this::updateDecision);
@@ -168,7 +167,7 @@ public abstract class Firm {
 
 		// If decision is empty nothing is done, thus previous decision is kept
 		optD.ifPresent(d -> {
-			Market.firms.updateFirmLists(this, getQuality(), d.getQuality());
+			market.firms.updateFirmLists(this, getQuality(), d.getQuality());
 			decision = d;
 			updateConsumerKnowledge();
 		});
@@ -188,7 +187,7 @@ public abstract class Firm {
 		// real q weighted by consumers already tried the firm
 		// disc q weighted by consumers didn't try the firm
 
-		double mktSize = Market.consumers.size();
+		double mktSize = market.consumers.size();
 		double notTriedBy = mktSize - triedBy;
 
 		double avgDiscountFactor = (Double) GetParameter("qualityDiscountMean");
@@ -205,8 +204,14 @@ public abstract class Firm {
 
 	}
 
+	public Offer getCompetitorPerceivedOffer(Firm f) {
+		return history.getCompetitorPerceivedOffer(f);
+	}
+
 	@ScheduledMethod(start = 1, priority = RunPriority.NEXT_STEP_FIRM_PRIORITY, interval = 1)
 	public void nextStep() {
+
+		double currentProfitWeight = market.firms.currentProfitWeight;
 		// This is run after all offers are made and consumers have chosen
 		// Calculates profit, accumProfit and kills the firm if necessary
 
@@ -234,10 +239,11 @@ public abstract class Firm {
 
 	private void initializeConsumerKnowledge() {
 
-		notYetKnownBy.addAll(Market.consumers);
+		notYetKnownBy.addAll(market.consumers);
 
 		// Take out of the list the initial "knower's"
-		getFromIgnorance(FastMath.round((Double) GetParameter("initiallyKnownByPerc") * Consumers.getMarketSize()));
+		getFromIgnorance(
+				FastMath.round((Double) GetParameter("initiallyKnownByPerc") * market.consumers.getMarketSize()));
 
 	}
 
@@ -246,7 +252,7 @@ public abstract class Firm {
 
 		for (int k = 0; (k < amount) && !notYetKnownBy.isEmpty(); k++) {
 
-			int i = Market.firms.getGetFromIgnoranceDistrib().nextIntFromTo(0, notYetKnownBy.size() - 1);
+			int i = market.firms.getGetFromIgnoranceDistrib().nextIntFromTo(0, notYetKnownBy.size() - 1);
 
 			c = notYetKnownBy.get(i);
 			notYetKnownBy.remove(i);
@@ -256,7 +262,7 @@ public abstract class Firm {
 	}
 
 	private void updateConsumerKnowledge() {
-		Consumers consumers = Market.consumers;
+		Consumers consumers = market.consumers;
 		int mktSize = consumers.size();
 
 		// if all Consumers know the firm then return
@@ -270,7 +276,8 @@ public abstract class Firm {
 
 		double alreadyK = mktSize - notYetKnownBy.size();
 
-		int knownByIncrement = (int) FastMath.round(Firms.diffusionSpeedParam * alreadyK * (1.0 - alreadyK / mktSize));
+		double diffusionSpeed = market.firms.diffusionSpeedParam;
+		int knownByIncrement = (int) FastMath.round(diffusionSpeed * alreadyK * (1.0 - alreadyK / mktSize));
 
 		knownByIncrement = FastMath.min(mktSize, knownByIncrement);
 		knownByIncrement = FastMath.max(1, knownByIncrement);
@@ -283,8 +290,10 @@ public abstract class Firm {
 		return (price - unitCost) * demand - fixedCost;
 	}
 
-	public static double getUnitCost(BigDecimal quality) {
+	public double getUnitCost(BigDecimal quality) {
 		// Cost grows quadratically with quality
+		double costScale = market.firms.costScale;	
+		double costExponent = market.firms.costExponent;
 		return costScale * FastMath.pow(quality.doubleValue(), costExponent);
 
 	}
@@ -292,8 +301,8 @@ public abstract class Firm {
 	private boolean isToBeKilled() {
 
 		// Returns true if firm should exit the market
-		boolean minProf = autoRegressiveProfit < Firms.minimumProfit;
-		boolean maxZeroDemand = accumZeroDemand > Firms.maxZeroDemand;
+		boolean minProf = autoRegressiveProfit < market.firms.minimumProfit;
+		boolean maxZeroDemand = accumZeroDemand > market.firms.maxZeroDemand;
 
 		return (minProf || maxZeroDemand);
 
@@ -301,12 +310,12 @@ public abstract class Firm {
 
 	public void killFirm() {
 
-		Market.firms.removeFromFirmLists(this);
+		market.firms.removeFromFirmLists(this);
 
 		// Remove firm from consumers lists
-		Market.consumers.forEach((c) -> c.removeTraceOfFirm(this));
+		market.consumers.forEach((c) -> c.removeTraceOfFirm(this));
 
-		Market.firms.remove(this);
+		market.firms.remove(this);
 
 	}
 
@@ -326,28 +335,28 @@ public abstract class Firm {
 	}
 
 	private double getKnownByPerc() {
-		return 1.0 - (double) notYetKnownBy.size() / (double) Consumers.getMarketSize();
+		return 1.0 - (double) notYetKnownBy.size() / (double) market.consumers.getMarketSize();
 	}
 
 	/*
 	 * Setters to probe DO NOT USE FOR CODE
 	 */
 	public void setPrice(double p) {
-		// Market.firms.removeFromFirmLists(this);
+		// market.firms.removeFromFirmLists(this);
 
 		Offer o = getOffer();
 		o.setPrice(p);
 
-		Market.firms.addToFirmLists(this);
+		market.firms.addToFirmLists(this);
 	}
 
 	public void setQuality(double q) {
-		// Market.firms.removeFromFirmLists(this);
+		// market.firms.removeFromFirmLists(this);
 
 		Offer o = getOffer();
 		o.setQuality(q);
 
-		Market.firms.addToFirmLists(this);
+		market.firms.addToFirmLists(this);
 	}
 
 	/*
@@ -447,11 +456,11 @@ public abstract class Firm {
 	}
 
 	public double getDemandShare() {
-		return (double) getDemand() / Market.firms.getTotalDemand();
+		return (double) getDemand() / market.firms.getTotalDemand();
 	}
 
 	public double getMktShare() {
-		return getSales() / Market.firms.getTotalSales();
+		return getSales() / market.firms.getTotalSales();
 	}
 
 	public String toString() {

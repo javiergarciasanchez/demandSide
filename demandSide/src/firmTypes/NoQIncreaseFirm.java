@@ -4,10 +4,16 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import demandSide.Market;
 import firms.Firm;
 import firms.Offer;
 
 public class NoQIncreaseFirm extends Firm {
+
+	public NoQIncreaseFirm(Market market) {
+		super(market);
+	}
+
 
 	public Stream<BigDecimal> getRealQualityOptions() {
 		

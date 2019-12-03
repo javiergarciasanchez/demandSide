@@ -21,15 +21,17 @@ import firms.ExpectedMarket;
 public class OptimalPrice {
 
 	public static Optional<OptimalPriceResult> get(Firm firm, BigDecimal realQ, ExpectedMarket expMkt) {
+		
+		Consumers consumers = firm.market.consumers;
 
 		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
-		double cost = Firm.getUnitCost(realQ);
+		double cost = firm.getUnitCost(realQ);
 
 		Neighbors currNeighbors;
 		OptimalPriceResult returnResult = null;
 
-		BigDecimal minPrice = Offer.getMinPrice(cost, perceivedQ);
-		BigDecimal maxPrice = Consumers.getMaxPriceForRichestConsumer(firm, perceivedQ);
+		BigDecimal minPrice = consumers.getMinPrice(cost, perceivedQ);
+		BigDecimal maxPrice = consumers.getMaxPriceForRichestConsumer(firm, perceivedQ);
 
 		/*
 		 * Remove firms that are not going to be considered as neighbors
@@ -91,22 +93,23 @@ public class OptimalPrice {
 	}
 
 	private static OptimalPriceResult getSegmentOptimalResult(Firm firm, BigDecimal realQ, Neighbors currNeighbors) {
+		
+		Consumers consumers = firm.market.consumers;
 
 		assert currNeighbors.getLoPriceLimit().compareTo(currNeighbors.getHiPriceLimit()) < 0;
 
 		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
-		double cost = Firm.getUnitCost(realQ);
+		double cost = firm.getUnitCost(realQ);
 
 		OptimalPriceResult result = new OptimalPriceResult();
 
 		result.price = getSegmentOptimalPrice(firm, realQ, currNeighbors);
 
-		Optional<Offer> loOffer = currNeighbors.getLoF().map(Firm::getPerceivedOffer);
-		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
+		Optional<Offer> loOffer = currNeighbors.getLoF().map(f -> firm.getCompetitorPerceivedOffer(f));
+		Optional<Offer> hiOffer = currNeighbors.getHiF().map(f -> firm.getCompetitorPerceivedOffer(f));
 
 		// Collect expected data
-		double fullDemand = Consumers.getExpectedQuantity(new Offer(result.price, perceivedQ), loOffer,
-				hiOffer);
+		double fullDemand = consumers.getExpectedQuantity(new Offer(result.price, perceivedQ), loOffer, hiOffer);
 		result.expInf.demand = firm.getAdjustedDemand(fullDemand);
 
 		result.expInf.profit = Firm.calcProfit(result.price.doubleValue(), cost, result.expInf.demand,
@@ -114,8 +117,8 @@ public class OptimalPrice {
 
 		// Collect
 		Optional<Offer> currOf = Optional.of(new Offer(result.price, perceivedQ));
-		result.expInf.loLimit = Consumers.limitingWelfareParamPerceivedByFirms(loOffer, currOf);
-		result.expInf.hiLimit = Consumers.limitingWelfareParamPerceivedByFirms(currOf, hiOffer);
+		result.expInf.loLimit = consumers.limitingWelfareParamPerceivedByFirms(loOffer, currOf);
+		result.expInf.hiLimit = consumers.limitingWelfareParamPerceivedByFirms(currOf, hiOffer);
 
 		return result;
 
@@ -130,8 +133,8 @@ public class OptimalPrice {
 
 		BigDecimal retval;
 
-		Optional<Offer> loOffer = currNeighbors.getLoF().map(Firm::getPerceivedOffer);
-		Optional<Offer> hiOffer = currNeighbors.getHiF().map(Firm::getPerceivedOffer);
+		Optional<Offer> loOffer = currNeighbors.getLoF().map(f -> firm.getCompetitorPerceivedOffer(f));
+		Optional<Offer> hiOffer = currNeighbors.getHiF().map(f -> firm.getCompetitorPerceivedOffer(f));
 
 		// This function returns zero when expected demand is smaller than
 		// minExpectedDemand

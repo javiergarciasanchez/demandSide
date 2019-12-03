@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 import consumers.Consumer;
 import consumers.Consumers;
-import consumers.UtilityFunction;
 import repast.simphony.context.Context;
 import repast.simphony.context.DefaultContext;
 import repast.simphony.dataLoader.ContextBuilder;
@@ -21,9 +20,9 @@ import repast.simphony.random.RandomHelper;
 public class Market extends DefaultContext<Object> implements ContextBuilder<Object> {
 
 	// Defining market components: consumers and firms
-	public static Consumers consumers;
-
-	public static Firms firms;
+	public RecessionsHandler recessionsHandler;
+	public Consumers consumers;
+	public Firms firms;
 
 	public static ArrayList<Firm> toBeKilled;
 
@@ -46,28 +45,25 @@ public class Market extends DefaultContext<Object> implements ContextBuilder<Obj
 		RunEnvironment.getInstance().endAt((Double) GetParameter("stopAt"));
 
 		// Reset static variables
-		Consumer.resetStaticVars();
-		Consumers.resetStaticVars();
-		UtilityFunction.resetStaticVars();
-		Firm.resetStaticVars();
-		Firms.resetStaticVars();
-		Offer.resetStaticVars();
-
+		Consumer.resetCounter();
+		Firm.resetCounter();
+		Offer.readOffersParams();
+		
 		// Initialize ToBeKilled
 		toBeKilled = new ArrayList<Firm>();
 
 		context.setId("Market");
 
 		// Create RecessionsHandler Handler
-		new RecessionsHandler(context);
+		recessionsHandler = new RecessionsHandler(context);
 
 		// Create Consumers
-		consumers = new Consumers();
+		consumers = new Consumers(this);
 		context.addSubContext(consumers);
-		Consumers.createConsumers();
+		consumers.createConsumers();
 
 		// Create firms
-		firms = new Firms();
+		firms = new Firms(this);
 		context.addSubContext(firms);
 
 		return context;

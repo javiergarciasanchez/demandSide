@@ -14,16 +14,6 @@ import firms.Offer;
 
 public class UtilityFunction {
 
-	private static double utilityQualityExponent;
-
-	/*
-	 * Functions used by consumers
-	 */
-
-	public static void resetStaticVars() {
-		utilityQualityExponent = (double) GetParameter("utilityQualityExponent");
-	}
-
 	/*
 	 * Utility function used by consumers to choose firm the quality factor is
 	 * discount factor applied to quality for choosing an untried firm
@@ -42,25 +32,33 @@ public class UtilityFunction {
 	}
 
 	private static double powQuality(BigDecimal quality) {
+
+		double utilityQualityExponent = (double) GetParameter("utilityQualityExponent");
+		
 		return Math.pow(quality.doubleValue(), utilityQualityExponent);
 	}
 
 	/*
 	 * Functions used by Firms
 	 */
-	public static BigDecimal getMaxPriceToEnter(Firm f, BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
-
+	public static BigDecimal getMaxPriceToEnter(Firm firm, BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
+		
+		Consumers consumers = firm.market.consumers;
+		
 		BigDecimal loP, loQ, hiP, hiQ;
+		Optional<Offer> hiOf, loOf;
 
-		if (!hiF.isPresent())
-			return Consumers.getMaxPriceForRichestConsumer(f, perceivedQ);
+		if (hiF.isEmpty())
+			return consumers.getMaxPriceForRichestConsumer(firm, perceivedQ);
 
 		// note that null will never be assigned because hiF is present
-		hiP = hiF.map(Firm::getPrice).orElse(null);
-		hiQ = hiF.map(Firm::getQuality).orElse(null);
+		hiOf = hiF.map(f -> firm.getCompetitorPerceivedOffer(f));
+		hiP = hiOf.map(Offer::getPrice).orElse(null);
+		hiQ = hiOf.map(Offer::getQuality).orElse(null);
 
-		loP = loF.map(Firm::getPrice).orElse(BigDecimal.ZERO);
-		loQ = loF.map(Firm::getPerceivedQuality).orElse(BigDecimal.ZERO);
+		loOf = loF.map(f->firm.getCompetitorPerceivedOffer(f));
+		loP = loOf.map(Offer::getPrice).orElse(BigDecimal.ZERO);
+		loQ = loOf.map(Offer::getQuality).orElse(BigDecimal.ZERO);
 
 		if (hiQ.compareTo(loQ) <= 0)
 			return BigDecimal.ZERO;
@@ -124,14 +122,16 @@ public class UtilityFunction {
 	 * Returns empty if any price expels f
 	 * 
 	 */
-	public static Optional<BigDecimal> priceToExpelFromAbove(BigDecimal q, Firm f, Optional<Firm> fLowNeighbor) {
+	public static Optional<BigDecimal> priceToExpelFromAbove(BigDecimal q, Firm owner, Firm f, Optional<Firm> fLowNeighbor) {
 
 		assert f != null;
+		
+		Consumers consumers = f.market.consumers;
 
-		Optional<Offer> fLowNeighborOffer = fLowNeighbor.map(firm -> firm.getPerceivedOffer());
-		Optional<Offer> fOffer = Optional.of(f.getPerceivedOffer());
+		Optional<Offer> fLowNeighborOffer = fLowNeighbor.map(firm -> owner.getCompetitorPerceivedOffer(firm));
+		Offer fOffer = owner.getCompetitorPerceivedOffer(f);		
 
-		double fLowLimit = Consumers.limitingWelfareParamPerceivedByFirms(fLowNeighborOffer, fOffer);
+		double fLowLimit = consumers.limitingWelfareParamPerceivedByFirms(fLowNeighborOffer, Optional.of(fOffer));
 
 		if (fLowLimit == Double.POSITIVE_INFINITY)
 			// Any price expels f
@@ -141,9 +141,9 @@ public class UtilityFunction {
 
 			// Calculation is done on double because bigdecimal does not support pow to
 			// double
-			double powPercQ = powQuality(f.getPerceivedQuality());
+			double powPercQ = powQuality(fOffer.getQuality());
 			double powQ = powQuality(q);
-			double price = f.getPrice().doubleValue();
+			double price = fOffer.getPrice().doubleValue();
 
 			// price + loLimit * (powQ - powPercQ)
 			double retval = price + fLowLimit * (powQ - powPercQ);
@@ -163,12 +163,14 @@ public class UtilityFunction {
 	 * Returns Zero is all prices expel f
 	 * 
 	 */
-	public static BigDecimal priceToExpelFromBelow(BigDecimal q, Firm f, Optional<Firm> fHighNeighbor) {
+	public static BigDecimal priceToExpelFromBelow(BigDecimal q, Firm owner, Firm f, Optional<Firm> fHighNeighbor) {
 
-		Optional<Offer> fHighNeighborOffer = fHighNeighbor.map(firm -> firm.getPerceivedOffer());
-		Optional<Offer> fOffer = Optional.of(f.getPerceivedOffer());
-
-		double fHighLimit = Consumers.limitingWelfareParamPerceivedByFirms(fOffer, fHighNeighborOffer);
+		Consumers consumers = owner.market.consumers;
+		
+		Optional<Offer> fHighNeighborOffer = fHighNeighbor.map(firm -> owner.getCompetitorPerceivedOffer(firm));
+		Offer fOffer = owner.getCompetitorPerceivedOffer(f);
+				
+		double fHighLimit = consumers.limitingWelfareParamPerceivedByFirms(Optional.of(fOffer), fHighNeighborOffer);
 
 		if (fHighLimit == Double.POSITIVE_INFINITY)
 			// No price expels f
@@ -178,9 +180,9 @@ public class UtilityFunction {
 
 			// Calculation is done on double because bigdecimal does not support pow to
 			// double
-			double powPercQ = powQuality(f.getPerceivedQuality());
+			double powPercQ = powQuality(fOffer.getQuality());
 			double powQ = powQuality(q);
-			double price = f.getPrice().doubleValue();
+			double price = fOffer.getPrice().doubleValue();
 
 			// price - hiLimit * (powPercQ - powQ)
 			double retval = price - fHighLimit * (powPercQ - powQ);

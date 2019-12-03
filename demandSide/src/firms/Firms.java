@@ -22,6 +22,8 @@ import repast.simphony.essentials.RepastEssentials;
 
 public class Firms extends DefaultContext<Firm> {
 
+	private Market market;
+
 	// Random distributions
 	public Uniform firmTypes;
 	private Gamma fixedCostDistrib;
@@ -29,8 +31,10 @@ public class Firms extends DefaultContext<Firm> {
 	private Uniform getFromIgnoranceDistrib;
 
 	// Parameters for Firms
-	static double initiallyKnownByPerc, minimumProfit, diffusionSpeedParam;
-	static int maxZeroDemand;
+	double initiallyKnownByPerc, diffusionSpeedParam,
+		minimumProfit, currentProfitWeight,
+		costScale, costExponent;
+	int maxZeroDemand;
 
 	// Data Summarization
 	private class MarketStats {
@@ -53,23 +57,30 @@ public class Firms extends DefaultContext<Firm> {
 	// Theoretical market based on perceived quality and price
 	public TreeMap<BigDecimal, Firm> firmsByQ;
 
-	public Firms() {
+	public Firms(Market market) {
 		super("Firms_Context");
 
+		this.market = market;
+
+		readParams();
+		
 		createProbabilityDistrib();
 
 		createFirmLists();
 
 	}
 
-	public static void resetStaticVars() {
+	public void readParams() {
 
 		// Read parameters for all firms
 		initiallyKnownByPerc = (Double) GetParameter("initiallyKnownByPerc");
 		minimumProfit = (Double) GetParameter("minimumProfit");
 		diffusionSpeedParam = (Double) GetParameter("diffusionSpeedParam");
 		maxZeroDemand = (int) GetParameter("maxZeroDemand");
-
+		costScale = (Double) GetParameter("costScale");
+		costExponent = (Double) GetParameter("costExponent");
+		currentProfitWeight = (Double) GetParameter("currentProfitWeight");
+		
 	}
 
 	private void createProbabilityDistrib() {
@@ -82,21 +93,20 @@ public class Firms extends DefaultContext<Firm> {
 		alfa = (1 / FastMath.pow(stdDevPercent, 2));
 		lamda = alfa / mean;
 //		fixedCostDistrib = RandomHelper.createGamma(alfa, lamda);
-		
+
 		RandomEngine engine = new MersenneTwister(Market.seed);
 		fixedCostDistrib = new Gamma(alfa, lamda, engine);
-		
+
 //		firmTypes = RandomHelper.createUniform(1, FirmTypes.values().length);
 		engine = new MersenneTwister(Market.seed);
 		firmTypes = new Uniform(1, FirmTypes.values().length, engine);
-		
-		
+
 		double maxIniQ = (double) GetParameter("maxInitialQuality");
 		engine = new MersenneTwister(Market.seed);
 		initialQualityDistrib = new Uniform(0.0, maxIniQ, engine);
-				
+
 		engine = new MersenneTwister(Market.seed);
-		getFromIgnoranceDistrib =new Uniform(engine);
+		getFromIgnoranceDistrib = new Uniform(engine);
 	}
 
 	public void createFirmLists() {
@@ -140,7 +150,7 @@ public class Firms extends DefaultContext<Firm> {
 //		FirmTypes.createRandomTypeFirm();
 
 		// Temporarily fixed the type
-		FirmTypes.STANDARD_FIRM.createFirm();
+		FirmTypes.STANDARD_FIRM.createFirm(market);
 
 	}
 
@@ -153,7 +163,7 @@ public class Firms extends DefaultContext<Firm> {
 
 	}
 
-	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_STATISTICS, interval = 1)
+	@ScheduledMethod(start = 1, priority = RunPriority.UPDATE_STATISTICS_PRIORITY, interval = 1)
 	public void updateStatistics() {
 		marketStats = stream().collect(MarketStats::new, MarketStats::accumulate, MarketStats::combine);
 	}
@@ -198,5 +208,5 @@ public class Firms extends DefaultContext<Firm> {
 	public double getTotalSales() {
 		return marketStats.totalSales;
 	}
-
+	
 }

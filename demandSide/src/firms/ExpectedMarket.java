@@ -13,11 +13,19 @@ import demandSide.Market;
 public class ExpectedMarket extends TreeSet<Firm> {
 
 	private static final long serialVersionUID = 1L;
+	Firm owner;
+	Market market;
+	Consumers consumers;
 
-	public ExpectedMarket(Firm omitFirm) {
+	public ExpectedMarket(Firm owner) {
 
-		super(new CompareByPerceivedQ());
-		Market.firms.stream().filter(f -> (!f.equals(omitFirm))).forEach(this::add);
+		super(new CompareByPerceivedQ(owner));
+
+		this.owner = owner;
+		market = owner.market;
+		consumers = market.consumers;
+
+		market.firms.stream().filter(f -> (!f.equals(owner))).forEach(this::add);
 
 	}
 
@@ -42,8 +50,9 @@ public class ExpectedMarket extends TreeSet<Firm> {
 
 	private void takeOutExpelledFirms(Firm firm) {
 
-		BigDecimal q = firm.getPerceivedQuality();
-		BigDecimal p = firm.getPrice();
+		Offer of = owner.getCompetitorPerceivedOffer(firm);
+		BigDecimal q = of.getQuality();
+		BigDecimal p = of.getPrice();
 
 		Stream.concat(headSet(firm).stream(), tailSet(firm, false).stream())
 				.filter(f -> getPriceToExpel(q, Optional.of(f)).isPresent())
@@ -54,18 +63,25 @@ public class ExpectedMarket extends TreeSet<Firm> {
 
 	private double getLoLimit(Firm f) {
 
-		Optional<Offer> loOf = Optional.ofNullable(lower(f)).map(lo -> lo.getPerceivedOffer());
-		Optional<Offer> of = Optional.of(f.getPerceivedOffer());
+		Optional<Offer> loOf, of;
 
-		return Consumers.limitingWelfareParamPerceivedByFirms(loOf, of);
+		loOf = Optional.ofNullable(lower(f)).map(loF -> owner.getCompetitorPerceivedOffer(loF));
+
+		of = Optional.of(owner.getCompetitorPerceivedOffer(f));
+
+		return consumers.limitingWelfareParamPerceivedByFirms(loOf, of);
 	}
 
 	private double getHiLimit(Firm f) {
 
-		Optional<Offer> hiOf = Optional.ofNullable(higher(f)).map(hi -> hi.getPerceivedOffer());
-		Optional<Offer> of = Optional.of(f.getPerceivedOffer());
+		Optional<Offer> hiOf, of;
 
-		return Consumers.limitingWelfareParamPerceivedByFirms(of, hiOf);
+		hiOf = Optional.ofNullable(higher(f)).map(hiF -> owner.getCompetitorPerceivedOffer(hiF));
+
+		of = Optional.of(owner.getCompetitorPerceivedOffer(f));
+
+		return consumers.limitingWelfareParamPerceivedByFirms(of, hiOf);
+
 	}
 
 	public Optional<Firm> getLowerFirmGivenQ(BigDecimal perceivedQ) {
@@ -73,13 +89,15 @@ public class ExpectedMarket extends TreeSet<Firm> {
 		// The reduce operation is to get the highest element of the ones that
 		// have lower perceived q
 		// This is the last element because the tree is ordered
-		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) <= 0).reduce((a, b) -> b);
+		return stream().filter(f -> owner.getCompetitorPerceivedOffer(f).getQuality().compareTo(perceivedQ) <= 0)
+				.reduce((a, b) -> b);
 
 	}
 
 	public Optional<Firm> getHigherFirmGivenQ(BigDecimal perceivedQ) {
 
-		return stream().filter(f -> f.getPerceivedQuality().compareTo(perceivedQ) > 0).findFirst();
+		return stream().filter(f -> owner.getCompetitorPerceivedOffer(f).getQuality().compareTo(perceivedQ) > 0)
+				.findFirst();
 
 	}
 
@@ -99,19 +117,20 @@ public class ExpectedMarket extends TreeSet<Firm> {
 		else
 			return Optional.empty();
 
-		BigDecimal firmPerceivedQ = f.getPerceivedQuality();
+		Offer firmOf = owner.getCompetitorPerceivedOffer(f);
+		BigDecimal firmPerceivedQ = firmOf.getQuality();
 		Optional<BigDecimal> retval;
 
 		if (q.compareTo(firmPerceivedQ) == 0)
 			// Any price below f's price expels f
-			retval = Optional.of(f.getPrice().subtract(Offer.getMinDeltaPrice()));
+			retval = Optional.of(firmOf.getPrice().subtract(Offer.getMinDeltaPrice()));
 
 		else if (q.compareTo(firmPerceivedQ) > 0)
 
-			retval = UtilityFunction.priceToExpelFromAbove(q, f, Optional.ofNullable(lower(f)));
+			retval = UtilityFunction.priceToExpelFromAbove(q, owner, f, Optional.ofNullable(lower(f)));
 
 		else
-			retval = Optional.of(UtilityFunction.priceToExpelFromBelow(q, f, Optional.ofNullable(higher(f))));
+			retval = Optional.of(UtilityFunction.priceToExpelFromBelow(q, owner, f, Optional.ofNullable(higher(f))));
 
 		return retval;
 

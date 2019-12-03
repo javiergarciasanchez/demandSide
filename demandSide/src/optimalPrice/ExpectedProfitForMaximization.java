@@ -6,12 +6,13 @@ import java.util.function.DoubleUnaryOperator;
 
 import org.apache.commons.math3.analysis.UnivariateFunction;
 
-import consumers.Consumers;
+import demandSide.Market;
 import firms.Firm;
 import firms.Offer;
 
 public class ExpectedProfitForMaximization implements UnivariateFunction {
 
+	private Market market;
 	private double perceivedQ;
 	private double cost;
 	private double fixedCost;
@@ -20,8 +21,9 @@ public class ExpectedProfitForMaximization implements UnivariateFunction {
 
 	public ExpectedProfitForMaximization(Firm firm, BigDecimal realQ, Optional<Offer> loOf, Optional<Offer> hiOf) {
 
+		this.market = firm.market;
 		this.perceivedQ = firm.getPerceivedQuality(realQ).doubleValue();
-		this.cost = Firm.getUnitCost(realQ);
+		this.cost = firm.getUnitCost(realQ);
 		this.adjDemand = firm::getAdjustedDemand;
 		this.fixedCost = firm.getFixedCost();
 		this.loOffer = loOf;
@@ -31,14 +33,14 @@ public class ExpectedProfitForMaximization implements UnivariateFunction {
 
 	@Override
 	public double value(double p) {
-		
-		double fullKnowledgeExpDemand = Consumers.getExpectedQuantity(new Offer(p, perceivedQ), loOffer,
+
+		double fullKnowledgeExpDemand = market.consumers.getExpectedQuantity(new Offer(p, perceivedQ), loOffer,
 				hiOffer);
 
 		double expDemand = adjDemand.applyAsDouble(fullKnowledgeExpDemand);
 
 		return (p - cost) * expDemand - fixedCost;
-		
+
 	}
 
 }
