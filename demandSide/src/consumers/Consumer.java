@@ -25,9 +25,9 @@ public class Consumer {
 	private Optional<Firm> chosenFirm;
 	private ExpectedUtilityComparator expUtilComp;
 
-	// This map collects the known firms, and provides a quality factor
-	// Quality factor is a discount in case consumer has not yet tried the firm
-	private HashMap<Firm, Double> knownFirmsQualityFactor;
+	// This map collects the known firms, and provides a quality discount
+	// Quality discount is used in case consumer has not yet tried the firm
+	private HashMap<Firm, Double> knownFirmsQualityDiscount;
 
 	protected static long consumerIDCounter = 1;
 
@@ -45,7 +45,7 @@ public class Consumer {
 
 		chosenFirm = Optional.empty();
 
-		knownFirmsQualityFactor = new HashMap<Firm, Double>();
+		knownFirmsQualityDiscount = new HashMap<Firm, Double>();
 
 		assignPreferences();
 
@@ -82,8 +82,7 @@ public class Consumer {
 
 	public void addToKnownFirms(Firm f) {
 		// It is assumed that firm was not known,
-		// thus quality factor is quality discount
-		knownFirmsQualityFactor.put(f, getQualityDiscount());
+		knownFirmsQualityDiscount.put(f, getQualityDiscount());
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.CHOOSE_FIRM_PRIORITY, interval = 1)
@@ -106,70 +105,45 @@ public class Consumer {
 	}
 
 	private void addToTriedFirms(Firm f) {
-		// Sets quality factor to 1
-		knownFirmsQualityFactor.put(f, 1.0);
+		// Sets quality discount to 1
+		knownFirmsQualityDiscount.put(f, 1.0);
 	}
 
 	private boolean firstTimeChosen(Firm f) {
-		return (knownFirmsQualityFactor.get(f) != 1.0);
+		return (knownFirmsQualityDiscount.get(f) != 1.0);
 	}
 
 	// Returns the firm from the known firms that maximizes utility
 	// if no firm is chosen returns empty (all utilities are below 0)
 	private Optional<Firm> chooseMaximizingFirm() {
 
-		double maxUtility = 0;
-		Optional<Firm> maxUtilFirm = Optional.empty();
+		return knownFirmsQualityDiscount.entrySet().stream().max(expUtilComp).filter(kF -> expectedUtility(kF) > 0.0)
+				.map(Map.Entry::getKey);
 
-		for (Entry<Firm, Double> knownFirm : knownFirmsQualityFactor.entrySet()) {
-
-			double tmpUtil = expectedUtility(knownFirm.getKey(), knownFirm.getValue());
-
-			if (tmpUtil > maxUtility) {
-				maxUtilFirm = Optional.of(knownFirm.getKey());
-				maxUtility = tmpUtil;
-			}
-		}
-
-		Optional<Firm> maxUtilFirm2;
-		maxUtilFirm2 = knownFirmsQualityFactor.entrySet().stream()
-				.max(expUtilComp).filter(kF->expectedUtility(kF)>0.0).
-				map(Map.Entry::getKey);
-		
-		
-
-		assert(maxUtilFirm.equals(maxUtilFirm2));
-		
-		// if no firm was chosen maxUtilFirm would be empty
-		return maxUtilFirm;
-
-	}
-
-	private double expectedUtility(Firm f, double qualityFactor) {
-
-		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
-
-		return UtilityFunction.expectedUtility(welfareParam, f.getOffer(), qualityFactor);
 	}
 
 	public double expectedUtility(Entry<Firm, Double> knownFirm) {
-		
+
+		assert (knownFirm != null);
+
 		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
 
-		Firm f = knownFirm.getKey();
-		double qualityFactor = knownFirm.getValue();
-		return UtilityFunction.expectedUtility(welfareParam, f.getOffer(), qualityFactor);
+		double price = knownFirm.getKey().getPrice().doubleValue();
+		double quality = knownFirm.getKey().getQuality().doubleValue();
+		double qualityDiscount = knownFirm.getValue();
+		
+		return UtilityFunction.realUtility(welfareParam, price, quality * qualityDiscount);
 	}
 
 	private double realUtility(Firm f) {
 
 		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
 
-		return UtilityFunction.realUtility(welfareParam, f.getOffer());
+		return UtilityFunction.realUtility(welfareParam, f.getPrice().doubleValue(), f.getQuality().doubleValue());
 	}
 
 	public void removeTraceOfFirm(Firm firm) {
-		knownFirmsQualityFactor.remove(firm);
+		knownFirmsQualityDiscount.remove(firm);
 
 		chosenFirm.ifPresent(f -> {
 			if (f.equals(firm))
@@ -202,7 +176,8 @@ public class Consumer {
 	}
 
 	public double getExpectedUtility() {
-		return chosenFirm.map(f -> expectedUtility(f, knownFirmsQualityFactor.get(f))).orElse(0.0);
+
+		return chosenFirm.map(f -> expectedUtility(Map.entry(f, knownFirmsQualityDiscount.get(f)))).orElse(0.0);
 	}
 
 	public double getRealUtility() {

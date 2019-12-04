@@ -14,28 +14,20 @@ import firms.Offer;
 
 public class UtilityFunction {
 
-	/*
-	 * Utility function used by consumers to choose firm the quality factor is
-	 * discount factor applied to quality for choosing an untried firm
-	 * 
-	 * There is no need to introduce a marginal utility of money because it is
-	 * implicit in the marginal utility of quality which depends on welfare param
-	 * 
-	 */
-	public static double expectedUtility(double welfareParam, Offer o, double qualityFactor) {
-		return welfareParam * powQuality(o.getQuality()) * qualityFactor - o.getPrice().doubleValue();
+	public static double realUtility(double welfareParam, double price, double quality) {
+		return welfareParam * powQuality(quality) - price;
 	}
-
-	public static double realUtility(double welfareParam, Offer o) {
-		// equal to expectedUtility except for the qualityFactor
-		return welfareParam * powQuality(o.getQuality()) - o.getPrice().doubleValue();
-	}
-
+	
 	private static double powQuality(BigDecimal quality) {
+		
+		return powQuality(quality.doubleValue());
+	}
+	
+	private static double powQuality(double quality) {
 
 		double utilityQualityExponent = (double) GetParameter("utilityQualityExponent");
 		
-		return Math.pow(quality.doubleValue(), utilityQualityExponent);
+		return Math.pow(quality, utilityQualityExponent);
 	}
 
 	/*
