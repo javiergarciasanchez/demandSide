@@ -2,8 +2,6 @@ package consumers;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
@@ -128,7 +126,7 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	/*
 	 * Calculates the welfare parameter (originally marginal utility of quality)
-	 * that divides consumer preferences, as perceived by firms (independenty how
+	 * that divides consumer preferences, as perceived by firms (independently of how
 	 * recessions are taken into account on firms decisions)
 	 * 
 	 * Consumers with a welfare parameter below "limit" will choose loOffer, while
@@ -168,24 +166,24 @@ public class Consumers extends DefaultContext<Consumer> {
 
 		assert (loOf != null) && (hiOf != null);
 
-		BigDecimal loQ, hiQ;
+		double loQ, hiQ;
 
 		loQ = loOf.getQuality();
 		hiQ = hiOf.getQuality();
 
-		BigDecimal loP, hiP;
+		double loP, hiP;
 		loP = loOf.getPrice();
 		hiP = hiOf.getPrice();
 
-		assert (loQ.compareTo(hiQ) <= 0);
+		assert (loQ <= hiQ);
 
 		double minRawWP = getMinRawWelfareParam();
 
-		if (loP.compareTo(hiP) >= 0)
+		if (loP >= hiP)
 			// no consumer would choose lower offer
 			return RecessionsHandler.getWelfareParamPerceivedByFirms(minRawWP);
 
-		else if (loQ.compareTo(hiQ) == 0) {
+		else if (loQ == hiQ) {
 			// as loP < hiP, no consumer would choose higher offer
 			return Double.POSITIVE_INFINITY;
 
@@ -196,16 +194,16 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public BigDecimal getMaxPriceForPoorestConsumer(BigDecimal quality) {
+	public double getMaxPriceForPoorestConsumer(double perceivedQ) {
 
 		double rawPoorestWP = getMinRawWelfareParam();
 		double poorestWelfareParam = RecessionsHandler.getWelfareParamPerceivedByFirms(rawPoorestWP);
 
-		return UtilityFunction.getMaxPriceForWelfareParam(quality, poorestWelfareParam);
+		return UtilityFunction.getMaxPriceForWelfareParam(perceivedQ, poorestWelfareParam);
 
 	}
 
-	public BigDecimal getMaxPriceForRichestConsumer(Firm f, BigDecimal perceivedQ) {
+	public double getMaxPriceForRichestConsumer(Firm f, double perceivedQ) {
 
 		double rawRichestWP = getRawMaxWelfareParamForRichestConsumer(f);
 		double richestWelfareParam = RecessionsHandler.getWelfareParamPerceivedByFirms(rawRichestWP);
@@ -228,48 +226,22 @@ public class Consumers extends DefaultContext<Consumer> {
 
 	}
 
-	public BigDecimal getMinPrice(double cost, BigDecimal perceivedQ) {
+	public double getMinPrice(double cost, double perceivedQ) {
 		// Should be higher than cost
-		BigDecimal costPlus = (BigDecimal.valueOf(cost)).add(Offer.getMinDeltaPrice());
+		double costPlus = cost + Offer.getMinDeltaPrice();
 
 		// Shouldn't be lower than the price needed to catch poorest consumer
-		BigDecimal pricePoorest = getMaxPriceForPoorestConsumer(perceivedQ);
+		double pricePoorest = getMaxPriceForPoorestConsumer(perceivedQ);
 
-		return costPlus.max(pricePoorest).setScale(Offer.getPriceScale(), RoundingMode.CEILING);
+		return FastMath.max(costPlus, pricePoorest);
 	}
 
-	public BigDecimal getMinPrice(Firm f, BigDecimal realQuality) {
+	public double getMinPrice(Firm f, double realQuality) {
 		return getMinPrice(f.getUnitCost(realQuality), f.getPerceivedQuality(realQuality));
 	}
 
-	public BigDecimal getMinQuality() {
+	public double getMinQuality() {
 		return Offer.getMinDeltaQuality();
-	}
-
-	public Optional<BigDecimal> getDownWardClosestAvailableQuality(BigDecimal q) {
-		BigDecimal minQ = getMinQuality();
-
-		// Search an available quality moving down
-		while (market.firms.firmsByQ.containsKey(q) && q.compareTo(minQ) > 0) {
-			q = q.subtract(Offer.getMinDeltaQuality());
-		}
-
-		if (market.firms.firmsByQ.containsKey(q))
-			return Optional.empty();
-		else
-			return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
-
-	}
-
-	public Optional<BigDecimal> getUpWardClosestAvailableQuality(BigDecimal q) {
-
-		// Search an available quality moving upward
-		while (market.firms.firmsByQ.containsKey(q)) {
-			q = q.add(Offer.getMinDeltaQuality());
-		}
-
-		return Optional.of(q.setScale(Offer.getQualityScale(), Offer.getQualityRounding()));
-
 	}
 
 }

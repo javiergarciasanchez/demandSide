@@ -1,7 +1,5 @@
 package firms;
 
-import java.math.BigDecimal;
-import java.util.Map.Entry;
 import java.util.Optional;
 
 import demandSide.Market;
@@ -16,16 +14,16 @@ public class History {
 		this.market = market;
 	}
 
-	public void updateCompetitorsPerceivedOffers(BigDecimal currQ) {
+	public void updateCompetitorsPerceivedOffers(Firm f) {
 
 		Optional<Firm> optF;
 
 		// Lower Neighbor
-		optF = Optional.ofNullable(market.firms.firmsByQ.lowerEntry(currQ)).map(Entry::getValue);
+		optF = Optional.ofNullable(market.firms.firmsByQ.lower(f));
 		NeighborData.updateNeighborData(lowerNeighbor, optF);
 
 		// Higher Neighbor
-		optF = Optional.ofNullable(market.firms.firmsByQ.higherEntry(currQ)).map(Entry::getValue);
+		optF = Optional.ofNullable(market.firms.firmsByQ.higher(f));
 		NeighborData.updateNeighborData(higherNeighbor, optF);
 
 	}

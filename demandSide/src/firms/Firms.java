@@ -1,8 +1,8 @@
 package firms;
 
-import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.TreeMap;
+import java.util.TreeSet;
+
 import org.apache.commons.math3.util.FastMath;
 
 import demandSide.Market;
@@ -55,7 +55,7 @@ public class Firms extends DefaultContext<Firm> {
 	private MarketStats marketStats;
 
 	// Theoretical market based on perceived quality and price
-	public TreeMap<BigDecimal, Firm> firmsByQ;
+	public TreeSet<Firm> firmsByQ;
 
 	public Firms(Market market) {
 		super("Firms_Context");
@@ -66,7 +66,7 @@ public class Firms extends DefaultContext<Firm> {
 		
 		createProbabilityDistrib();
 
-		createFirmLists();
+		firmsByQ = new TreeSet<Firm>(new FirmComparatorByQ());
 
 	}
 
@@ -109,27 +109,17 @@ public class Firms extends DefaultContext<Firm> {
 		getFromIgnoranceDistrib = new Uniform(engine);
 	}
 
-	public void createFirmLists() {
-
-		firmsByQ = new TreeMap<BigDecimal, Firm>();
-
-	}
-
 	public void addToFirmLists(Firm f) {
-
-		firmsByQ.put(f.getQuality(), f);
-
+		firmsByQ.add(f);
 	}
 
-	public void updateFirmLists(Firm f, BigDecimal prevQ, BigDecimal newQ) {
-		firmsByQ.remove(prevQ);
-		firmsByQ.put(newQ, f);
+	public void updateFirmLists(Firm f, double prevQ, double newQ) {
+		firmsByQ.remove(f);		
+		firmsByQ.add(f);
 	}
 
 	public void removeFromFirmLists(Firm f) {
-
-		firmsByQ.remove(f.getQuality());
-
+		firmsByQ.remove(f);
 	}
 
 	@ScheduledMethod(start = 1, priority = RunPriority.ADD_FIRMS_PRIORITY, interval = 1)

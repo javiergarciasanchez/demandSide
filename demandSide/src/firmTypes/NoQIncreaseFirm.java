@@ -1,7 +1,5 @@
 package firmTypes;
 
-import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import demandSide.Market;
@@ -15,19 +13,16 @@ public class NoQIncreaseFirm extends Firm {
 	}
 
 
-	public Stream<BigDecimal> getRealQualityOptions() {
+	public Stream<Double> getRealQualityOptions() {
 		
-		Stream.Builder<Optional<BigDecimal>> realQOpts = Stream.builder();
-		
-		BigDecimal currRealQ = getQuality();
-		
-		realQOpts.add(Optional.of(currRealQ));
+		double currRealQ = getQuality();
+		double step = Offer.getQualityStep();
 		
 		// Quality should be higher than zero
-		if (currRealQ.compareTo(Offer.getQualityStep()) > 0) 
-			realQOpts.add(getClosestAvailableQuality(currRealQ.subtract(Offer.getQualityStep())));
-		
-		return realQOpts.build().filter(op->op.isPresent()).map(Optional::get);
+		if (currRealQ > step)
+			return Stream.of(currRealQ, currRealQ - step);
+		else
+			return Stream.of(currRealQ);	
 		
 	}
 

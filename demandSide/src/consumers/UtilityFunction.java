@@ -2,8 +2,6 @@ package consumers;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Optional;
 
 import org.apache.commons.math3.util.FastMath;
@@ -18,11 +16,6 @@ public class UtilityFunction {
 		return welfareParam * powQuality(quality) - price;
 	}
 	
-	private static double powQuality(BigDecimal quality) {
-		
-		return powQuality(quality.doubleValue());
-	}
-	
 	private static double powQuality(double quality) {
 
 		double utilityQualityExponent = (double) GetParameter("utilityQualityExponent");
@@ -33,11 +26,11 @@ public class UtilityFunction {
 	/*
 	 * Functions used by Firms
 	 */
-	public static BigDecimal getMaxPriceToEnter(Firm firm, BigDecimal perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
+	public static double getMaxPriceToEnter(Firm firm, double perceivedQ, Optional<Firm> loF, Optional<Firm> hiF) {
 		
 		Consumers consumers = firm.market.consumers;
 		
-		BigDecimal loP, loQ, hiP, hiQ;
+		double loP, loQ, hiP, hiQ;
 		Optional<Offer> hiOf, loOf;
 
 		if (hiF.isEmpty())
@@ -49,11 +42,11 @@ public class UtilityFunction {
 		hiQ = hiOf.map(Offer::getQuality).orElse(null);
 
 		loOf = loF.map(f->firm.getCompetitorPerceivedOffer(f));
-		loP = loOf.map(Offer::getPrice).orElse(BigDecimal.ZERO);
-		loQ = loOf.map(Offer::getQuality).orElse(BigDecimal.ZERO);
+		loP = loOf.map(Offer::getPrice).orElse(0.);
+		loQ = loOf.map(Offer::getQuality).orElse(0.);
 
-		if (hiQ.compareTo(loQ) <= 0)
-			return BigDecimal.ZERO;
+		if (hiQ <= loQ)
+			return 0.0;
 		else {
 			// This depends on Consumers utility functional form
 
@@ -62,15 +55,12 @@ public class UtilityFunction {
 			double powPercQ = powQuality(perceivedQ);
 			double powLoQ = powQuality(loQ);
 			double powHiQ = powQuality(hiQ);
-			double hiPD = hiP.doubleValue();
-			double loPD = loP.doubleValue();
+			double hiPD = hiP;
+			double loPD = loP;
 
 			// maxPrice = (hiP * (powPercQ - powLoQ) + loP * (powHiQ - powPercQ)) / (powHiQ
 			// - powLoQ)
-			double retval = (hiPD * (powPercQ - powLoQ) + loPD * (powHiQ - powPercQ)) / (powHiQ - powLoQ);
-
-			// It rounds downward to make sure firm would enter
-			return BigDecimal.valueOf(retval).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
+			return (hiPD * (powPercQ - powLoQ) + loPD * (powHiQ - powPercQ)) / (powHiQ - powLoQ);
 
 		}
 
@@ -79,25 +69,23 @@ public class UtilityFunction {
 	/*
 	 * As Welfare param > p/powQ then p < welfare param * powQ
 	 */
-	static BigDecimal getMaxPriceForWelfareParam(BigDecimal quality, double welfareParam) {
+	static double getMaxPriceForWelfareParam(double perceivedQ, double welfareParam) {
 
-		double retval = welfareParam * powQuality(quality);
-
-		return BigDecimal.valueOf(retval).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
+		return welfareParam * powQuality(perceivedQ);
 
 	}
 
 	/*
 	 * (hiP - loP) / (powHiQ - powLoQ)
 	 */
-	public static double calculateRawLimit(BigDecimal loP, BigDecimal loQ, BigDecimal hiP, BigDecimal hiQ) {
+	public static double calculateRawLimit(double loP, double loQ, double hiP, double hiQ) {
 
-		assert (loQ.compareTo(hiQ) < 0) && (loP.compareTo(hiP) < 0);
+		assert ((loQ <hiQ) && (loP < hiP));
 
 		double powLoQ = powQuality(loQ);
 		double powHiQ = powQuality(hiQ);
-		double hiPD = hiP.doubleValue();
-		double loPD = loP.doubleValue();
+		double hiPD = hiP;
+		double loPD = loP;
 
 		double rawWP = (hiPD - loPD) / (powHiQ - powLoQ);
 
@@ -114,7 +102,7 @@ public class UtilityFunction {
 	 * Returns empty if any price expels f
 	 * 
 	 */
-	public static Optional<BigDecimal> priceToExpelFromAbove(BigDecimal q, Firm owner, Firm f, Optional<Firm> fLowNeighbor) {
+	public static Optional<Double> priceToExpelFromAbove(double perceivedQ, Firm owner, Firm f, Optional<Firm> fLowNeighbor) {
 
 		assert f != null;
 		
@@ -134,14 +122,12 @@ public class UtilityFunction {
 			// Calculation is done on double because bigdecimal does not support pow to
 			// double
 			double powPercQ = powQuality(fOffer.getQuality());
-			double powQ = powQuality(q);
-			double price = fOffer.getPrice().doubleValue();
+			double powQ = powQuality(perceivedQ);
+			double price = fOffer.getPrice();
 
 			// price + loLimit * (powQ - powPercQ)
 			double retval = price + fLowLimit * (powQ - powPercQ);
-
-			// It rounds downward to make sure firm would enter
-			return Optional.of(BigDecimal.valueOf(retval).setScale(Offer.getPriceScale(), RoundingMode.FLOOR));
+			return Optional.of(retval);
 
 		}
 	}
@@ -155,7 +141,7 @@ public class UtilityFunction {
 	 * Returns Zero is all prices expel f
 	 * 
 	 */
-	public static BigDecimal priceToExpelFromBelow(BigDecimal q, Firm owner, Firm f, Optional<Firm> fHighNeighbor) {
+	public static double priceToExpelFromBelow(double perceivedQ, Firm owner, Firm f, Optional<Firm> fHighNeighbor) {
 
 		Consumers consumers = owner.market.consumers;
 		
@@ -166,21 +152,18 @@ public class UtilityFunction {
 
 		if (fHighLimit == Double.POSITIVE_INFINITY)
 			// No price expels f
-			return BigDecimal.ZERO;
+			return 0.0;
 		else {
 			// This depends on Consumers utility functional form
 
 			// Calculation is done on double because bigdecimal does not support pow to
 			// double
 			double powPercQ = powQuality(fOffer.getQuality());
-			double powQ = powQuality(q);
-			double price = fOffer.getPrice().doubleValue();
+			double powQ = powQuality(perceivedQ);
+			double price = fOffer.getPrice();
 
 			// price - hiLimit * (powPercQ - powQ)
-			double retval = price - fHighLimit * (powPercQ - powQ);
-
-			// It rounds downward to make sure firm would enter
-			return BigDecimal.valueOf(retval).setScale(Offer.getPriceScale(), RoundingMode.FLOOR);
+			return price - fHighLimit * (powPercQ - powQ);
 
 		}
 
@@ -193,7 +176,7 @@ public class UtilityFunction {
 
 		assert of != null;
 
-		double rawWP = of.getPrice().doubleValue() / powQuality(of.getQuality());
+		double rawWP = of.getPrice() / powQuality(of.getQuality());
 
 		rawWP = FastMath.max(rawWP, Consumers.getMinRawWelfareParam());
 		

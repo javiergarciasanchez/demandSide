@@ -21,11 +21,11 @@ public class Scale {
 	}
 
 	public static void update(Firm f) {
-		double p = f.getPrice().doubleValue();		
+		double p = f.getPrice();		
 		minP = (p < minP) ? p : minP;
 		maxP = (p > maxP) ? p : maxP;
 
-		double q = f.getQuality().doubleValue();
+		double q = f.getQuality();
 		minQ = (q < minQ) ? q : minQ;
 		maxQ = (q > maxQ) ? q : maxQ;
 

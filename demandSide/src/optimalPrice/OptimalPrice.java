@@ -1,9 +1,7 @@
 package optimalPrice;
 
-import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.optim.MaxEval;
@@ -20,18 +18,18 @@ import firms.ExpectedMarket;
 
 public class OptimalPrice {
 
-	public static Optional<OptimalPriceResult> get(Firm firm, BigDecimal realQ, ExpectedMarket expMkt) {
-		
+	public static Optional<OptimalPriceResult> get(Firm firm, double realQ, ExpectedMarket expMkt) {
+
 		Consumers consumers = firm.market.consumers;
 
-		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
+		double perceivedQ = firm.getPerceivedQuality(realQ);
 		double cost = firm.getUnitCost(realQ);
 
 		Neighbors currNeighbors;
 		OptimalPriceResult returnResult = null;
 
-		BigDecimal minPrice = consumers.getMinPrice(cost, perceivedQ);
-		BigDecimal maxPrice = consumers.getMaxPriceForRichestConsumer(firm, perceivedQ);
+		double minPrice = consumers.getMinPrice(cost, perceivedQ);
+		double maxPrice = consumers.getMaxPriceForRichestConsumer(firm, perceivedQ);
 
 		/*
 		 * Remove firms that are not going to be considered as neighbors
@@ -44,7 +42,7 @@ public class OptimalPrice {
 		 * 
 		 */
 		expMkt.removeIf(f -> {
-			Optional<BigDecimal> pToE = expMkt.getPriceToExpel(perceivedQ, Optional.of(f));
+			Optional<Double> pToE = expMkt.getPriceToExpel(perceivedQ, Optional.of(f));
 			if (pToE.isPresent())
 				return pToE.get().compareTo(maxPrice) >= 0;
 			else
@@ -65,10 +63,12 @@ public class OptimalPrice {
 		Iterator<ToBeExpelled> itToBeExpelled;
 		itToBeExpelled = expMkt.stream().map(new AddPriceToBeExpelled(expMkt, perceivedQ))
 				.filter(toBeExp -> toBeExp.optPriceToBeExpelled.isPresent())
-				.filter(toBeExp -> toBeExp.getPriceToBeExpelled().compareTo(minPrice) >= 0)
-				.sorted(new CompareByPriceToExpel()).collect(Collectors.toList()).iterator();
+				.filter(toBeExp -> toBeExp.getPriceToBeExpelled() >= minPrice)
+				.sorted(new CompareByPriceToExpel())
+				.iterator();
+		
 
-		Optional<BigDecimal> prevPriceToBeExpelled;
+		Optional<Double> prevPriceToBeExpelled;
 		ToBeExpelled toBeExpelled;
 		while (itToBeExpelled.hasNext()) {
 
@@ -92,13 +92,13 @@ public class OptimalPrice {
 
 	}
 
-	private static OptimalPriceResult getSegmentOptimalResult(Firm firm, BigDecimal realQ, Neighbors currNeighbors) {
-		
+	private static OptimalPriceResult getSegmentOptimalResult(Firm firm, double realQ, Neighbors currNeighbors) {
+
 		Consumers consumers = firm.market.consumers;
 
-		assert currNeighbors.getLoPriceLimit().compareTo(currNeighbors.getHiPriceLimit()) < 0;
+		assert (currNeighbors.getLoPriceLimit() < currNeighbors.getHiPriceLimit());
 
-		BigDecimal perceivedQ = firm.getPerceivedQuality(realQ);
+		double perceivedQ = firm.getPerceivedQuality(realQ);
 		double cost = firm.getUnitCost(realQ);
 
 		OptimalPriceResult result = new OptimalPriceResult();
@@ -112,8 +112,7 @@ public class OptimalPrice {
 		double fullDemand = consumers.getExpectedQuantity(new Offer(result.price, perceivedQ), loOffer, hiOffer);
 		result.expInf.demand = firm.getAdjustedDemand(fullDemand);
 
-		result.expInf.profit = Firm.calcProfit(result.price.doubleValue(), cost, result.expInf.demand,
-				firm.getFixedCost());
+		result.expInf.profit = Firm.calcProfit(result.price, cost, result.expInf.demand, firm.getFixedCost());
 
 		// Collect
 		Optional<Offer> currOf = Optional.of(new Offer(result.price, perceivedQ));
@@ -124,14 +123,14 @@ public class OptimalPrice {
 
 	}
 
-	private static BigDecimal getSegmentOptimalPrice(Firm firm, BigDecimal realQ, Neighbors currNeighbors) {
+	private static double getSegmentOptimalPrice(Firm firm, double realQ, Neighbors currNeighbors) {
 
-		BigDecimal loPriceLimit = currNeighbors.getLoPriceLimit();
-		BigDecimal hiPriceLimit = currNeighbors.getHiPriceLimit();
+		double loPriceLimit = currNeighbors.getLoPriceLimit();
+		double hiPriceLimit = currNeighbors.getHiPriceLimit();
 
-		assert loPriceLimit.compareTo(hiPriceLimit) < 0;
+		assert (loPriceLimit < hiPriceLimit);
 
-		BigDecimal retval;
+		double retval;
 
 		Optional<Offer> loOffer = currNeighbors.getLoF().map(f -> firm.getCompetitorPerceivedOffer(f));
 		Optional<Offer> hiOffer = currNeighbors.getHiF().map(f -> firm.getCompetitorPerceivedOffer(f));
@@ -152,22 +151,21 @@ public class OptimalPrice {
 
 		try {
 			UnivariatePointValuePair optimRetval = optim.optimize(
-					new SearchInterval(loPriceLimit.doubleValue(), hiPriceLimit.doubleValue()), GoalType.MAXIMIZE,
+					new SearchInterval(loPriceLimit, hiPriceLimit), GoalType.MAXIMIZE,
 					new UnivariateObjectiveFunction(expectedGrossProfitForMaxim), maxIter, maxEval);
 
 			double optPrice = optimRetval.getPoint();
-			assert (loPriceLimit.doubleValue() <= optPrice) && (optPrice <= hiPriceLimit.doubleValue());
+			assert (loPriceLimit <= optPrice) && (optPrice <= hiPriceLimit);
 
-			retval = BigDecimal.valueOf(optPrice);
+			retval = optPrice;
 
 		} catch (TooManyEvaluationsException e) {
 			// it should return best value obtained, but we don't have it
 			// returning the middle value of segment
-			retval = loPriceLimit.add(hiPriceLimit).divide(BigDecimal.valueOf(2.0), Offer.getPriceScale(),
-					Offer.getPriceRounding());
+			retval = loPriceLimit + hiPriceLimit / 2.0;
 		}
 
-		return retval.setScale(Offer.getPriceScale(), Offer.getPriceRounding());
+		return retval;
 
 	}
 

@@ -1,6 +1,5 @@
 package firmTypes;
 
-import java.math.BigDecimal;
 import java.util.stream.Stream;
 
 import demandSide.Market;
@@ -12,14 +11,8 @@ public class NoQChangeFirm extends Firm {
 		super(market);
 	}
 
-	public Stream<BigDecimal> getRealQualityOptions() {
-		
-		Stream.Builder<BigDecimal> realQOpts = Stream.builder();;		
-		
-		realQOpts.add(getQuality());
-		
-		return realQOpts.build();		
-		
+	public Stream<Double> getRealQualityOptions() {
+		return Stream.of(getQuality());	
 	}
 		
 	public FirmTypes getFirmType() {

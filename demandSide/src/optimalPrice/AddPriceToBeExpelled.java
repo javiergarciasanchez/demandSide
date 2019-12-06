@@ -1,6 +1,5 @@
 package optimalPrice;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -9,11 +8,11 @@ import firms.ExpectedMarket;
 
 public class AddPriceToBeExpelled implements Function<Firm, ToBeExpelled> {
 	ExpectedMarket expMkt;
-	BigDecimal perceivedQ;
+	double perceivedQ;
 
-	AddPriceToBeExpelled(ExpectedMarket expMkt, BigDecimal perceivedQ) {
+	AddPriceToBeExpelled(ExpectedMarket expMkt, double perceivedQ2) {
 		this.expMkt = expMkt;
-		this.perceivedQ = perceivedQ;
+		this.perceivedQ = perceivedQ2;
 	}
 
 	@Override

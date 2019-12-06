@@ -128,8 +128,8 @@ public class Consumer {
 
 		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
 
-		double price = knownFirm.getKey().getPrice().doubleValue();
-		double quality = knownFirm.getKey().getQuality().doubleValue();
+		double price = knownFirm.getKey().getPrice();
+		double quality = knownFirm.getKey().getQuality();
 		double qualityDiscount = knownFirm.getValue();
 		
 		return UtilityFunction.realUtility(welfareParam, price, quality * qualityDiscount);
@@ -139,7 +139,7 @@ public class Consumer {
 
 		double welfareParam = RecessionsHandler.getWelfareParamForConsumers(getRawWelfareParam());
 
-		return UtilityFunction.realUtility(welfareParam, f.getPrice().doubleValue(), f.getQuality().doubleValue());
+		return UtilityFunction.realUtility(welfareParam, f.getPrice(), f.getQuality());
 	}
 
 	public void removeTraceOfFirm(Firm firm) {

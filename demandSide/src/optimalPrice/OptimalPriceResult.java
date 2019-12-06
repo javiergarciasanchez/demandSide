@@ -1,17 +1,15 @@
 package optimalPrice;
 
-import java.math.BigDecimal;
-
 import firms.ExpectedInfo;
 
 public class OptimalPriceResult {
 	
-	public BigDecimal price = BigDecimal.ZERO;
+	public double price = 0.0;
 	public ExpectedInfo expInf;
 	
 	public OptimalPriceResult(){
 		
-		price = BigDecimal.ZERO;
+		price = 0.0;
 		expInf = new ExpectedInfo();
 		
 	}

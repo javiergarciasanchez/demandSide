@@ -1,6 +1,5 @@
 package optimalPrice;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.function.DoubleUnaryOperator;
 
@@ -19,10 +18,10 @@ public class ExpectedProfitForMaximization implements UnivariateFunction {
 	private DoubleUnaryOperator adjDemand;
 	Optional<Offer> loOffer, hiOffer;
 
-	public ExpectedProfitForMaximization(Firm firm, BigDecimal realQ, Optional<Offer> loOf, Optional<Offer> hiOf) {
+	public ExpectedProfitForMaximization(Firm firm, double realQ, Optional<Offer> loOf, Optional<Offer> hiOf) {
 
 		this.market = firm.market;
-		this.perceivedQ = firm.getPerceivedQuality(realQ).doubleValue();
+		this.perceivedQ = firm.getPerceivedQuality(realQ);
 		this.cost = firm.getUnitCost(realQ);
 		this.adjDemand = firm::getAdjustedDemand;
 		this.fixedCost = firm.getFixedCost();

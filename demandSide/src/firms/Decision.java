@@ -1,7 +1,5 @@
 package firms;
 
-import java.math.BigDecimal;
-
 import optimalPrice.OptimalPriceResult;
 
 public class Decision {
@@ -10,7 +8,7 @@ public class Decision {
 
 	public ExpectedInfo expInf = new ExpectedInfo();
 
-	public Decision(OptimalPriceResult optPR, BigDecimal q) {
+	public Decision(OptimalPriceResult optPR, double q) {
 
 		offer = new Offer(optPR.price, q);
 		expInf = optPR.expInf;
@@ -21,19 +19,19 @@ public class Decision {
 		return offer;
 	}
 
-	public BigDecimal getPrice() {
+	public double getPrice() {
 		return offer.getPrice();
 	}
 
-	public void setPrice(BigDecimal price) {
+	public void setPrice(double price) {
 		this.offer.setPrice(price);
 	}
 
-	public BigDecimal getQuality() {
+	public double getQuality() {
 		return offer.getQuality();
 	}
 
-	public void setQuality(BigDecimal quality) {
+	public void setQuality(double quality) {
 		this.offer.setQuality(quality);
 	}
 

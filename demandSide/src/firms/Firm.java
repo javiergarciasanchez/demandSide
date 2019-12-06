@@ -2,7 +2,6 @@ package firms;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -66,16 +65,9 @@ public abstract class Firm {
 
 	private boolean makeInitialOffer() {
 
-		Optional<BigDecimal> optQ;
-		BigDecimal realQ;
+		double realQ;
 
-		optQ = getRandomQuality();
-
-		if (optQ.isPresent())
-			realQ = optQ.get();
-		else
-			// There is no available quality
-			return false;
+		realQ = getRandomQuality();
 
 		Optional<Decision> optPriceDecision = getOptPriceDecision(realQ);
 		optPriceDecision.ifPresent(opd -> setNewDecision(opd));
@@ -84,19 +76,9 @@ public abstract class Firm {
 
 	}
 
-	private Optional<BigDecimal> getRandomQuality() {
+	private Double getRandomQuality() {
 
-		double doubleQ = market.firms.getInitialQualityDistrib().nextDouble();
-		return getClosestAvailableQuality(BigDecimal.valueOf(doubleQ));
-	}
-
-	public Optional<BigDecimal> getClosestAvailableQuality(BigDecimal q) {
-
-		// If quality is occupied it tries first upward then downward
-		Optional<BigDecimal> up = market.consumers.getUpWardClosestAvailableQuality(q);
-
-		return (up.isPresent() ? up : market.consumers.getDownWardClosestAvailableQuality(q));
-
+		return market.firms.getInitialQualityDistrib().nextDouble();
 	}
 
 	private void setNewDecision(Decision d) {
@@ -116,7 +98,7 @@ public abstract class Firm {
 	public void makeOffer() {
 
 		// Update competitors expected offers
-		history.updateCompetitorsPerceivedOffers(getQuality());
+		history.updateCompetitorsPerceivedOffers(this);
 
 		// Gets possible quality options
 		// Then gets the optimal price for each quality option
@@ -128,7 +110,7 @@ public abstract class Firm {
 
 	}
 
-	public abstract Stream<BigDecimal> getRealQualityOptions();
+	public abstract Stream<Double> getRealQualityOptions();
 
 	public abstract FirmTypes getFirmType();
 
@@ -153,7 +135,7 @@ public abstract class Firm {
 	 * Decision includes expected demand and expected Gross Profit
 	 */
 
-	private Optional<Decision> getOptPriceDecision(BigDecimal realQ) {
+	private Optional<Decision> getOptPriceDecision(double realQ) {
 
 		ExpectedMarket expMkt = new ExpectedMarket(this);
 
@@ -173,13 +155,12 @@ public abstract class Firm {
 		});
 	}
 
-	public BigDecimal getPerceivedQuality() {
+	public double getPerceivedQuality() {
 		return getPerceivedQuality(getQuality());
 	}
 
-	public BigDecimal getPerceivedQuality(BigDecimal realQuality) {
-		return realQuality.multiply(BigDecimal.valueOf(getPerceptionDiscount())).setScale(Offer.getQualityScale(),
-				Offer.getQualityRounding());
+	public double getPerceivedQuality(double realQuality) {
+		return realQuality * getPerceptionDiscount();
 	}
 
 	private double getPerceptionDiscount() {
@@ -216,7 +197,7 @@ public abstract class Firm {
 		// Calculates profit, accumProfit and kills the firm if necessary
 
 		// Calculate profits of period
-		profit = calcProfit(getPrice().doubleValue(), getUnitCost(getQuality()), getDemand(), getFixedCost());
+		profit = calcProfit(getPrice(), getUnitCost(getQuality()), getDemand(), getFixedCost());
 
 		accumProfit += getProfit();
 
@@ -290,11 +271,11 @@ public abstract class Firm {
 		return (price - unitCost) * demand - fixedCost;
 	}
 
-	public double getUnitCost(BigDecimal quality) {
+	public double getUnitCost(double realQuality) {
 		// Cost grows quadratically with quality
 		double costScale = market.firms.costScale;	
 		double costExponent = market.firms.costExponent;
-		return costScale * FastMath.pow(quality.doubleValue(), costExponent);
+		return costScale * FastMath.pow(realQuality, costExponent);
 
 	}
 
@@ -392,14 +373,14 @@ public abstract class Firm {
 	}
 
 	public double getSales() {
-		return getDemand() * getPrice().doubleValue();
+		return getDemand() * getPrice();
 	}
 
-	public BigDecimal getPrice() {
+	public double getPrice() {
 		return decision.getPrice();
 	}
 
-	public BigDecimal getQuality() {
+	public double getQuality() {
 		return decision.getQuality();
 	}
 
@@ -444,7 +425,7 @@ public abstract class Firm {
 	}
 
 	public double getGrossMargin() {
-		return (getPrice().doubleValue() - getUnitCost(getQuality())) / getPrice().doubleValue();
+		return (getPrice() - getUnitCost(getQuality())) / getPrice();
 	}
 
 	public double getPoorestConsumer() {

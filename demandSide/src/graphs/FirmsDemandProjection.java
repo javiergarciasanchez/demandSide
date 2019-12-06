@@ -1,7 +1,5 @@
 package graphs;
 
-import java.math.BigDecimal;
-
 import demandSide.Market;
 import firms.Firm;
 import repast.simphony.context.space.continuous.ContextSpace;
@@ -37,8 +35,8 @@ public class FirmsDemandProjection {
 				qualityToCoord(firm.getQuality()));
 	}
 
-	private double priceToCoord(BigDecimal price) {
-		return (price.doubleValue() - Scale.getMinPrice())
+	private double priceToCoord(double price) {
+		return (price - Scale.getMinPrice())
 				/ (Scale.getMaxPrice() - Scale.getMinPrice()) * (MAX_X - MIN_X)
 				+ MIN_X;
 	}
@@ -47,8 +45,8 @@ public class FirmsDemandProjection {
 		return (double)demand / (double) market.consumers.getMarketSize() * (MAX_Y - MIN_Y) + MIN_Y;
 	}
 
-	private double qualityToCoord(BigDecimal quality) {
-		return MAX_Z - ((quality.doubleValue() - Scale.getMinQuality())
+	private double qualityToCoord(double quality) {
+		return MAX_Z - ((quality - Scale.getMinQuality())
 				/ (Scale.getMaxQuality() - Scale.getMinQuality())
 				* (MAX_Z - MIN_Z) + MIN_Z);
 	}

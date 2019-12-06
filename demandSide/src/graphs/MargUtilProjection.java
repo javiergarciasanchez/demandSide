@@ -2,8 +2,6 @@ package graphs;
 
 import static repast.simphony.essentials.RepastEssentials.GetParameter;
 
-import java.math.BigDecimal;
-
 import org.apache.commons.math3.util.FastMath;
 
 import consumers.Consumer;
@@ -53,8 +51,8 @@ public class MargUtilProjection {
 
 	}
 
-	private double getPoorestConsumerMargUtil(BigDecimal price, BigDecimal quality) {
-		return quality.doubleValue() / price.doubleValue();
+	private double getPoorestConsumerMargUtil(double price, double quality) {
+		return quality / price;
 	}
 
 	private int margUtilToCoord(double margUtilOfQuality) {

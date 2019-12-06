@@ -1,6 +1,5 @@
 package firms;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -51,12 +50,12 @@ public class ExpectedMarket extends TreeSet<Firm> {
 	private void takeOutExpelledFirms(Firm firm) {
 
 		Offer of = owner.getCompetitorPerceivedOffer(firm);
-		BigDecimal q = of.getQuality();
-		BigDecimal p = of.getPrice();
+		double q = of.getQuality();
+		double p = of.getPrice();
 
 		Stream.concat(headSet(firm).stream(), tailSet(firm, false).stream())
 				.filter(f -> getPriceToExpel(q, Optional.of(f)).isPresent())
-				.filter(f -> p.compareTo(getPriceToExpel(q, Optional.of(f)).get()) <= 0).collect(Collectors.toList())
+				.filter(f -> p <= getPriceToExpel(q, Optional.of(f)).get()) .collect(Collectors.toList())
 				.forEach(this::remove);
 
 	}
@@ -84,19 +83,19 @@ public class ExpectedMarket extends TreeSet<Firm> {
 
 	}
 
-	public Optional<Firm> getLowerFirmGivenQ(BigDecimal perceivedQ) {
+	public Optional<Firm> getLowerFirmGivenQ(double perceivedQ) {
 
 		// The reduce operation is to get the highest element of the ones that
 		// have lower perceived q
 		// This is the last element because the tree is ordered
-		return stream().filter(f -> owner.getCompetitorPerceivedOffer(f).getQuality().compareTo(perceivedQ) <= 0)
+		return stream().filter(f -> owner.getCompetitorPerceivedOffer(f).getQuality() <= perceivedQ)
 				.reduce((a, b) -> b);
 
 	}
 
-	public Optional<Firm> getHigherFirmGivenQ(BigDecimal perceivedQ) {
+	public Optional<Firm> getHigherFirmGivenQ(double perceivedQ) {
 
-		return stream().filter(f -> owner.getCompetitorPerceivedOffer(f).getQuality().compareTo(perceivedQ) > 0)
+		return stream().filter(f -> owner.getCompetitorPerceivedOffer(f).getQuality() > perceivedQ)
 				.findFirst();
 
 	}
@@ -108,7 +107,7 @@ public class ExpectedMarket extends TreeSet<Firm> {
 	 * 
 	 * Returns 0 if no price expels f
 	 */
-	public Optional<BigDecimal> getPriceToExpel(BigDecimal q, Optional<Firm> optF) {
+	public Optional<Double> getPriceToExpel(double perceivedQ, Optional<Firm> optF) {
 
 		Firm f;
 
@@ -118,19 +117,19 @@ public class ExpectedMarket extends TreeSet<Firm> {
 			return Optional.empty();
 
 		Offer firmOf = owner.getCompetitorPerceivedOffer(f);
-		BigDecimal firmPerceivedQ = firmOf.getQuality();
-		Optional<BigDecimal> retval;
+		double firmPerceivedQ = firmOf.getQuality();
+		Optional<Double> retval;
 
-		if (q.compareTo(firmPerceivedQ) == 0)
+		if (perceivedQ == firmPerceivedQ)
 			// Any price below f's price expels f
-			retval = Optional.of(firmOf.getPrice().subtract(Offer.getMinDeltaPrice()));
+			retval = Optional.of(firmOf.getPrice() - Offer.getMinDeltaPrice());
 
-		else if (q.compareTo(firmPerceivedQ) > 0)
+		else if (perceivedQ > firmPerceivedQ)
 
-			retval = UtilityFunction.priceToExpelFromAbove(q, owner, f, Optional.ofNullable(lower(f)));
+			retval = UtilityFunction.priceToExpelFromAbove(perceivedQ, owner, f, Optional.ofNullable(lower(f)));
 
 		else
-			retval = Optional.of(UtilityFunction.priceToExpelFromBelow(q, owner, f, Optional.ofNullable(higher(f))));
+			retval = Optional.of(UtilityFunction.priceToExpelFromBelow(perceivedQ, owner, f, Optional.ofNullable(higher(f))));
 
 		return retval;
 
